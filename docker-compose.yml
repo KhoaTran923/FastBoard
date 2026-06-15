@@ -1,0 +1,26 @@
+# Local development services for FastBoard.
+# Usage:
+#   docker compose up -d      # start PostgreSQL in the background
+#   docker compose down       # stop it (data is kept in the named volume)
+#   docker compose down -v    # stop and wipe the database
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: fastboard-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: fastboard
+    ports:
+      - '5432:5432'
+    volumes:
+      - fastboard-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres -d fastboard']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  fastboard-pgdata:
