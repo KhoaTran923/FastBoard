@@ -1,8 +1,8 @@
 import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
-import rateLimit from 'express-rate-limit';
 
+import { apiLimiter } from './middlewares/rateLimit.middleware.js';
 import authRoutes from './routes/auth.routes.js';
 import projectRoutes from './routes/project.routes.js';
 
@@ -18,20 +18,8 @@ app.use(
 );
 app.use(express.json());
 
-// Rate limiting
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100,
-  standardHeaders: true,
-  legacyHeaders: false,
-});
-const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 10,
-  message: { success: false, error: 'Too many requests, please try again later.' },
-});
-
-app.use('/api/', limiter);
+// Rate limiting (the strict login/register limiter lives on those routes)
+app.use('/api/', apiLimiter);
 
 // ── Health ──────────────────────────────────────────────
 app.get('/api/health', (_req, res) => {
@@ -39,7 +27,7 @@ app.get('/api/health', (_req, res) => {
 });
 
 // ── Routes ──────────────────────────────────────────────
-app.use('/api/auth', authLimiter, authRoutes);
+app.use('/api/auth', authRoutes);
 app.use('/api/projects', projectRoutes);
 
 // ── Global Error Handler ────────────────────────────────
