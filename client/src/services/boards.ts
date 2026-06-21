@@ -79,6 +79,7 @@ export interface CreateTaskInput {
   title: string;
   description?: string;
   priority?: Task['priority'];
+  assignee_ids?: string[];
 }
 
 export async function createTask(
@@ -100,7 +101,8 @@ export interface UpdateTaskInput {
   description?: string | null;
   priority?: Task['priority'] | null;
   due_date?: string | null;
-  assignee_id?: string | null;
+  /** Full set of assignee user ids (replaces the current set). */
+  assignee_ids?: string[];
   column_id?: string;
 }
 

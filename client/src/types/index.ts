@@ -1,4 +1,4 @@
-// Shared types — mirror the server's domain model (server/src/types/index.ts).
+// Shared types — mirror the server's domain model
 
 export type UserRole = 'admin' | 'member' | 'viewer';
 export type TaskPriority = 'low' | 'medium' | 'high' | 'urgent';
@@ -26,7 +26,7 @@ export interface Task {
   description?: string | null;
   priority?: TaskPriority | null;
   due_date?: string | null;
-  assignee_id?: string | null;
+  assignees: string[];
   position: number;
   completed_at?: string | null;
   created_at: string;

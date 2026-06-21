@@ -5,7 +5,7 @@ export const createTaskSchema = z.object({
   description: z.string().optional(),
   priority: z.enum(['low', 'medium', 'high', 'urgent']).optional(),
   due_date: z.string().date().optional(),
-  assignee_id: z.string().uuid().optional(),
+  assignee_ids: z.array(z.string().uuid()).optional(),
   position: z.number().int().min(0).optional(),
 });
 
@@ -14,7 +14,7 @@ export const updateTaskSchema = z.object({
   description: z.string().nullable().optional(),
   priority: z.enum(['low', 'medium', 'high', 'urgent']).nullable().optional(),
   due_date: z.string().date().nullable().optional(),
-  assignee_id: z.string().uuid().nullable().optional(),
+  assignee_ids: z.array(z.string().uuid()).optional(),
   position: z.number().int().min(0).optional(),
   column_id: z.string().uuid().optional(),
 });

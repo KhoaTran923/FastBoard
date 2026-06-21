@@ -1,5 +1,5 @@
 import { useBoardStore } from '../../stores/boardStore';
-import type { Task } from '../../types';
+import type { Member, Task } from '../../types';
 
 // Priority badge colours (background tint + text).
 const PRIORITY_STYLES: Record<string, string> = {
@@ -17,6 +17,18 @@ function formatDueDate(value: string): string {
   return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 }
 
+function Assignee({ email }: { email: string }) {
+  // Avatar is a coloured initial for now; swap for a Gravatar image later.
+  return (
+    <div className="flex items-center gap-2" title={email}>
+      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-purple/20 text-[10px] font-bold uppercase text-purple">
+        {email[0]}
+      </span>
+      <span className="truncate text-xs text-medium-grey">{email}</span>
+    </div>
+  );
+}
+
 interface TaskCardProps {
   task: Task;
   onClick?: () => void;
@@ -24,7 +36,9 @@ interface TaskCardProps {
 
 export function TaskCard({ task, onClick }: TaskCardProps) {
   const members = useBoardStore((s) => s.members);
-  const assignee = task.assignee_id ? members.find((m) => m.id === task.assignee_id) : undefined;
+  const assignees = (task.assignees ?? [])
+    .map((id) => members.find((m) => m.id === id))
+    .filter((m): m is Member => Boolean(m));
 
   return (
     <div
@@ -32,6 +46,10 @@ export function TaskCard({ task, onClick }: TaskCardProps) {
       className="group cursor-pointer rounded-lg bg-white px-4 py-4 shadow-[0_4px_6px_rgba(54,78,126,0.1)] dark:bg-dark-grey"
     >
       <h4 className="font-bold text-black group-hover:text-purple dark:text-white">{task.title}</h4>
+
+      {task.description && (
+        <p className="mt-1.5 line-clamp-2 text-xs text-medium-grey">{task.description}</p>
+      )}
 
       {(task.priority || task.due_date) && (
         <div className="mt-3 flex flex-wrap items-center gap-2">
@@ -64,13 +82,16 @@ export function TaskCard({ task, onClick }: TaskCardProps) {
         </div>
       )}
 
-      {assignee && (
-        // Avatar is a coloured initial for now; swap for a Gravatar image later.
-        <div className="mt-3 flex items-center gap-2" title={assignee.email}>
-          <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-purple/20 text-[10px] font-bold uppercase text-purple">
-            {assignee.email[0]}
-          </span>
-          <span className="truncate text-xs text-medium-grey">{assignee.email}</span>
+      {assignees.length > 0 && (
+        <div className="mt-3 space-y-1.5">
+          {assignees.slice(0, 2).map((m) => (
+            <Assignee key={m.id} email={m.email} />
+          ))}
+          {assignees.length > 2 && (
+            <p className="pl-8 text-xs font-medium text-medium-grey">
+              +{assignees.length - 2} more
+            </p>
+          )}
         </div>
       )}
     </div>

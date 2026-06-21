@@ -76,7 +76,10 @@ export interface Task {
   description?: string;
   priority?: TaskPriority;
   due_date?: Date;
+  /** @deprecated single assignee — superseded by the `assignees` array. */
   assignee_id?: string;
+  /** User ids assigned to this task (from the task_assignees join table). */
+  assignees?: string[];
   position: number;
   completed_at?: Date;
   created_at: Date;

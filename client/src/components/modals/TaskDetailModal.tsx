@@ -19,10 +19,13 @@ export function TaskDetailModal({ task, onClose }: { task: Task; onClose: () => 
   const [description, setDescription] = useState(task.description ?? '');
   const [priority, setPriority] = useState<TaskPriority | ''>(task.priority ?? '');
   const [columnId, setColumnId] = useState(task.column_id);
-  const [assigneeId, setAssigneeId] = useState(task.assignee_id ?? '');
+  const [assigneeIds, setAssigneeIds] = useState<string[]>(task.assignees ?? []);
+  const [adding, setAdding] = useState(false);
   const [dueDate, setDueDate] = useState(task.due_date ? task.due_date.slice(0, 10) : '');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
+
+  const available = members.filter((m) => !assigneeIds.includes(m.id));
 
   async function handleSave(e: FormEvent) {
     e.preventDefault();
@@ -38,7 +41,7 @@ export function TaskDetailModal({ task, onClose }: { task: Task; onClose: () => 
         description: description.trim() || null,
         priority: priority || null,
         column_id: columnId,
-        assignee_id: assigneeId || null,
+        assignee_ids: assigneeIds,
         due_date: dueDate || null,
       });
       onClose();
@@ -110,33 +113,104 @@ export function TaskDetailModal({ task, onClose }: { task: Task; onClose: () => 
           </Field>
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
-          <Field label="Assignee">
-            <select
-              value={assigneeId}
-              onChange={(e) => setAssigneeId(e.target.value)}
-              className={fieldClass}
-            >
-              <option value="" className="text-black">
-                Unassigned
-              </option>
-              {members.map((m) => (
-                <option key={m.id} value={m.id} className="text-black">
-                  {m.email}
-                </option>
-              ))}
-            </select>
-          </Field>
+        <Field label="Assignees">
+          <div className="space-y-2">
+            {assigneeIds.length === 0 && (
+              <p className="text-xs text-medium-grey">No one assigned yet.</p>
+            )}
+            {assigneeIds.map((id) => {
+              const member = members.find((m) => m.id === id);
+              const email = member?.email ?? 'Unknown user';
+              return (
+                <div
+                  key={id}
+                  className="flex items-center gap-2 rounded-md border border-medium-grey/20 px-3 py-1.5"
+                >
+                  <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-purple/20 text-[10px] font-bold uppercase text-purple">
+                    {email[0]}
+                  </span>
+                  <span className="flex-1 truncate text-[13px] text-black dark:text-white">
+                    {email}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setAssigneeIds((ids) => ids.filter((x) => x !== id))}
+                    aria-label={`Remove ${email}`}
+                    className="text-medium-grey hover:text-red"
+                  >
+                    <svg
+                      width="14"
+                      height="14"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                    >
+                      <line x1="6" y1="6" x2="18" y2="18" />
+                      <line x1="18" y1="6" x2="6" y2="18" />
+                    </svg>
+                  </button>
+                </div>
+              );
+            })}
 
-          <Field label="Due date">
-            <input
-              type="date"
-              value={dueDate}
-              onChange={(e) => setDueDate(e.target.value)}
-              className={fieldClass}
-            />
-          </Field>
-        </div>
+            {available.length > 0 ? (
+              adding ? (
+                <select
+                  autoFocus
+                  value=""
+                  onChange={(e) => {
+                    if (e.target.value) setAssigneeIds((ids) => [...ids, e.target.value]);
+                    setAdding(false);
+                  }}
+                  onBlur={() => setAdding(false)}
+                  className={fieldClass}
+                >
+                  <option value="">Select a member…</option>
+                  {available.map((m) => (
+                    <option key={m.id} value={m.id} className="text-black">
+                      {m.email}
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setAdding(true)}
+                  className="flex items-center gap-2 rounded-md px-2 py-1 text-sm font-bold text-purple hover:bg-purple/10"
+                >
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                  >
+                    <line x1="12" y1="5" x2="12" y2="19" />
+                    <line x1="5" y1="12" x2="19" y2="12" />
+                  </svg>
+                  Add assignee
+                </button>
+              )
+            ) : (
+              assigneeIds.length > 0 && (
+                <p className="text-xs text-medium-grey">All members are assigned.</p>
+              )
+            )}
+          </div>
+        </Field>
+
+        <Field label="Due date">
+          <input
+            type="date"
+            value={dueDate}
+            onChange={(e) => setDueDate(e.target.value)}
+            className={fieldClass}
+          />
+        </Field>
 
         <div className="flex gap-3 pt-1">
           <Button type="submit" fullWidth disabled={busy}>
