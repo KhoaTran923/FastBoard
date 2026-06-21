@@ -1,10 +1,10 @@
 import { useState, type FormEvent } from 'react';
 import { Link, Navigate, useNavigate } from 'react-router-dom';
-import { AuthCard, OrDivider } from '../components/AuthCard';
-import { GoogleButton } from '../components/GoogleButton';
-import { PasswordInput } from '../components/PasswordInput';
-import { Button, Field, Input } from '../components/ui';
-import { apiErrorMessage } from '../lib/api';
+import { AuthCard, OrDivider } from '../components/common/AuthCard';
+import { GoogleButton } from '../components/common/GoogleButton';
+import { PasswordInput } from '../components/common/PasswordInput';
+import { Button, Field, Input } from '../components/common/ui';
+import { apiErrorMessage } from '../services/http';
 import { useAuthStore } from '../stores/authStore';
 
 export function LoginPage() {

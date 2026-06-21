@@ -1,7 +1,7 @@
 import { useEffect, type ReactNode } from 'react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
-import { Board } from '../components/Board';
-import { Button, Spinner } from '../components/ui';
+import { KanbanBoard } from '../components/Board/KanbanBoard';
+import { Button, Spinner } from '../components/common/ui';
 import { useAuthStore } from '../stores/authStore';
 import { useBoardStore } from '../stores/boardStore';
 import type { BoardOutletContext } from '../layouts/AppLayout';
@@ -14,7 +14,7 @@ function Centered({ children }: { children: ReactNode }) {
   );
 }
 
-export function BoardPage() {
+export function BoardView() {
   const authStatus = useAuthStore((s) => s.status);
   const status = useBoardStore((s) => s.status);
   const boards = useBoardStore((s) => s.boards);
@@ -86,5 +86,5 @@ export function BoardPage() {
     );
   }
 
-  return <Board board={activeBoard} onNewColumn={openNewColumn} />;
+  return <KanbanBoard board={activeBoard} onNewColumn={openNewColumn} />;
 }

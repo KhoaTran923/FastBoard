@@ -8,8 +8,8 @@ import {
   getColumnTasks,
   getProjects,
   type CreateTaskInput,
-} from '../api/boards';
-import { apiErrorMessage } from '../lib/api';
+} from '../services/boards';
+import { apiErrorMessage } from '../services/http';
 import type { Board, BoardDetail } from '../types';
 
 const DEFAULT_WORKSPACE = 'My Workspace';

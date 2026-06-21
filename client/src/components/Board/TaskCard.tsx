@@ -1,4 +1,4 @@
-import type { Task } from '../types';
+import type { Task } from '../../types';
 
 const PRIORITY_COLOR: Record<string, string> = {
   low: 'bg-[#67E2AE]',

@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from 'react';
-import { Modal } from '../Modal';
-import { Button, Field, Input } from '../ui';
-import { apiErrorMessage } from '../../lib/api';
+import { Modal } from '../common/Modal';
+import { Button, Field, Input } from '../common/ui';
+import { apiErrorMessage } from '../../services/http';
 
 interface BoardFormModalProps {
   onClose: () => void;

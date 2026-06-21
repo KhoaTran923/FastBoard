@@ -1,21 +1,19 @@
 {
   "name": "@repo/wasm",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
-  "exports": {
-    ".": {
-      "types": "./src/index.ts",
-      "import": "./src/index.ts"
-    }
-  },
+  "description": "FastBoard WebAssembly modules (AssemblyScript)",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "echo 'Run wasm-pack build here'",
-    "typecheck": "tsc --noEmit"
+    "build": "asc --target release",
+    "build:debug": "asc --target debug",
+    "bench": "node bench/benchmark.mjs",
+    "typecheck": "asc src/search.ts --noEmit"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "type": "module"
+  "type": "module",
+  "devDependencies": {
+    "@assemblyscript/loader": "^0.28.19",
+    "assemblyscript": "^0.28.19"
+  }
 }

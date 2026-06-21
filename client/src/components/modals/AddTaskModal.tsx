@@ -1,8 +1,8 @@
 import { useState, type FormEvent } from 'react';
-import { Modal } from '../Modal';
-import { Button, Field, Input } from '../ui';
-import { apiErrorMessage } from '../../lib/api';
-import type { CreateTaskInput } from '../../api/boards';
+import { Modal } from '../common/Modal';
+import { Button, Field, Input } from '../common/ui';
+import { apiErrorMessage } from '../../services/http';
+import type { CreateTaskInput } from '../../services/boards';
 import type { TaskPriority } from '../../types';
 
 interface AddTaskModalProps {

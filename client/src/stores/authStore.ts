@@ -1,6 +1,6 @@
 import { create } from 'zustand';
-import { fetchMe, loginRequest, registerRequest, type RegisterInput } from '../api/auth';
-import { tokenStore } from '../lib/api';
+import { fetchMe, loginRequest, registerRequest, type RegisterInput } from '../services/auth';
+import { tokenStore } from '../services/http';
 import type { User } from '../types';
 
 type AuthStatus = 'idle' | 'loading' | 'authenticated' | 'unauthenticated';

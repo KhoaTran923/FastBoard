@@ -1,0 +1,20 @@
+{
+  "entries": ["src/search.ts"],
+  "options": {
+    "exportRuntime": true
+  },
+  "targets": {
+    "release": {
+      "outFile": "../client/public/wasm/search.wasm",
+      "optimizeLevel": 3,
+      "shrinkLevel": 1,
+      "converge": false,
+      "noAssert": true
+    },
+    "debug": {
+      "outFile": "build/search.wasm",
+      "textFile": "build/search.wat",
+      "debug": true
+    }
+  }
+}

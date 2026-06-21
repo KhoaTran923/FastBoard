@@ -1,4 +1,4 @@
-import api from '../lib/api';
+import api from './http';
 import type { ApiResponse, AuthResponse, User } from '../types';
 
 export interface RegisterInput {

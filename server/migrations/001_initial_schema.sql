@@ -1,5 +1,5 @@
 -- FastBoard Initial Schema
--- Run: psql $DATABASE_URL -f src/migrations/001_initial_schema.sql
+-- Run: psql $DATABASE_URL -f migrations/001_initial_schema.sql   (or: pnpm migrate)
 
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 

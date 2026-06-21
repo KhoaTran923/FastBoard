@@ -1,4 +1,4 @@
-import api from '../lib/api';
+import api from './http';
 import type { ApiResponse, Board, Column, Project, Task } from '../types';
 
 // ── Projects ──────────────────────────────────────────────────────────────────

@@ -1,7 +1,3 @@
-/**
- * Placeholder for Google OAuth — the design includes it, but social sign-in
- * isn't part of the Week 2/3 backend yet, so it's rendered disabled.
- */
 export function GoogleButton() {
   return (
     <button

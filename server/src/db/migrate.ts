@@ -4,11 +4,11 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import pool from './pool.js';
 
-// Migrations live in server/src/migrations as plain .sql files, applied in
-// filename order (001_..., 002_..., ...). Each is run once, inside a
-// transaction, and recorded in the schema_migrations table so re-running this
-// script only applies new files.
-const migrationsDir = join(dirname(fileURLToPath(import.meta.url)), '..', 'migrations');
+// Migrations live in server/migrations as plain .sql files, applied in filename
+// order (001_..., 002_..., ...). Each is run once, inside a transaction, and
+// recorded in the schema_migrations table so re-running this script only
+// applies new files. (This module is at server/src/db, so go up two levels.)
+const migrationsDir = join(dirname(fileURLToPath(import.meta.url)), '..', '..', 'migrations');
 
 async function migrate(): Promise<void> {
   const client = await pool.connect();

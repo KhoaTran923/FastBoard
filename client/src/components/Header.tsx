@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { LogoMark } from './Logo';
-import { Button } from './ui';
+import { LogoMark } from './common/Logo';
+import { SearchBar } from './SearchBar';
+import { Button } from './common/ui';
 import { useAuthStore } from '../stores/authStore';
 import { useBoardStore } from '../stores/boardStore';
 
@@ -27,15 +28,18 @@ export function Header({ onAddTask, sidebarHidden }: HeaderProps) {
   }
 
   return (
-    <header className="flex h-20 shrink-0 items-center justify-between border-b border-lines-light bg-white px-6 dark:border-lines-dark dark:bg-dark-grey">
-      <div className="flex items-center gap-4">
+    <header className="grid h-20 shrink-0 grid-cols-3 items-center gap-4 border-b border-lines-light bg-white px-6 dark:border-lines-dark dark:bg-dark-grey">
+      <div className="flex min-w-0 items-center gap-4">
         {sidebarHidden && <LogoMark />}
         <h1 className="truncate text-xl font-bold text-black dark:text-white">
           {activeBoard?.name ?? 'FastBoard'}
         </h1>
       </div>
 
-      <div className="flex items-center gap-2">
+      {/* Centered WASM-powered task search */}
+      <div className="flex justify-center">{authed && activeBoard && <SearchBar />}</div>
+
+      <div className="flex items-center justify-end gap-2">
         <Button onClick={onAddTask} disabled={!authed || !activeBoard}>
           + Add New Task
         </Button>

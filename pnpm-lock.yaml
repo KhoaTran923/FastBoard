@@ -243,6 +243,9 @@ importers:
 
   client:
     dependencies:
+      '@assemblyscript/loader':
+        specifier: ^0.28.19
+        version: 0.28.19
       '@repo/wasm':
         specifier: workspace:*
         version: link:../wasm
@@ -363,13 +366,23 @@ importers:
         specifier: ^2.0.0
         version: 2.1.9(@types/node@24.13.1)(lightningcss@1.32.0)
 
-  wasm: {}
+  wasm:
+    devDependencies:
+      '@assemblyscript/loader':
+        specifier: ^0.28.19
+        version: 0.28.19
+      assemblyscript:
+        specifier: ^0.28.19
+        version: 0.28.19
 
 packages:
 
   '@ampproject/remapping@2.3.0':
     resolution: {integrity: sha512-30iZtAPgz+LTIYoeivqYo853f02jBYSd5uGnGpkFV0M3xOt9aN73erkgYAmZU43x4VfqcnLxW9Kpg3R5LC4YYw==}
     engines: {node: '>=6.0.0'}
+
+  '@assemblyscript/loader@0.28.19':
+    resolution: {integrity: sha512-6OhPTJ0nS8aay8t2lhbA/XkyffgU15ECPsLHT0VZFG7j7sUA1CT2HS7nIALwjg6Pdpgp+RTHQukgK1IoCUbxCQ==}
 
   '@babel/code-frame@7.29.7':
     resolution: {integrity: sha512-Aup7aUOfpbAUg2ROOJN6Iw5f9DMBlzu0mIkm/malLQFN/YQgO48wCj0Kxa3sEHJvPVFg7siR+qRInwXd2qhQKw==}
@@ -1418,6 +1431,11 @@ packages:
     resolution: {integrity: sha512-BNoCY6SXXPQ7gF2opIP4GBE+Xw7U+pHMYKuzjgCN3GwiaIR09UUeKfheyIry77QtrCBlC0KK0q5/TER/tYh3PQ==}
     engines: {node: '>= 0.4'}
 
+  assemblyscript@0.28.19:
+    resolution: {integrity: sha512-yOAlAb9EsrI00oUaf6qUTtTcYYeelG2iC3f1LnA45XUeSlMrp2O2FF5Llj4P+Y84ZiIlh/ciEEpOaPwwmOKq8g==}
+    engines: {node: '>=20', npm: '>=10'}
+    hasBin: true
+
   assertion-error@2.0.1:
     resolution: {integrity: sha512-Izi8RQcffqCeNVgFigKli1ssklIbpHnCYc6AknXGYoB6grJqyeby7jv12JUQgmTAnIDnbck1uxksT4dzN3PWBA==}
     engines: {node: '>=12'}
@@ -1450,6 +1468,10 @@ packages:
 
   bcryptjs@2.4.3:
     resolution: {integrity: sha512-V/Hy/X9Vt7f3BbPJEi8BdVFMByHi+jNXrYkW3huaybV/kQ0KJg0Y6PkEMbn+zeT+i+SiKZ/HMqJGIIt4LZDqNQ==}
+
+  binaryen@130.0.0-nightly.20260609:
+    resolution: {integrity: sha512-Zyl9Tw638x08LDew22YtxdYiUGxn+quzpR3ySIS4Nccv6yAiO5j1Yko9IEPNpj/aBZf71xtD/6hYXsgZ2ye3ew==}
+    hasBin: true
 
   body-parser@2.2.2:
     resolution: {integrity: sha512-oP5VkATKlNwcgvxi0vM0p/D3n2C3EReYVX+DNYs5TjZFn/oQt2j+4sVJtSMr18pdRr8wjTcBl6LoV+FUwzPmNA==}
@@ -2319,6 +2341,9 @@ packages:
     resolution: {integrity: sha512-9ie8ItPR6tjY5uYJh8K/Zrv/RMZ5VOlOWvtZdEHYSTFKZfIBPQa9tOAEeAWhd+AnIneLJ22w5fjOYtoutpWq5w==}
     engines: {node: '>=18'}
 
+  long@5.3.2:
+    resolution: {integrity: sha512-mNAgZ1GmyNhD7AuqnTG3/VQ26o760+ZYBPKjPvugO8+nLbYfX6TVpJPseBvopbdY+qpZ/lKUnmEc1LeZYS3QAA==}
+
   loose-envify@1.4.0:
     resolution: {integrity: sha512-lyuxPGr/Wfhrlem2CL/UcnUc1zcqKAImBDzukY7Y5F/yQiNdko6+fRLevlw1HgMySw7f611UIY408EtxRSoK3Q==}
     hasBin: true
@@ -3163,6 +3188,8 @@ snapshots:
     dependencies:
       '@jridgewell/gen-mapping': 0.3.13
       '@jridgewell/trace-mapping': 0.3.31
+
+  '@assemblyscript/loader@0.28.19': {}
 
   '@babel/code-frame@7.29.7':
     dependencies:
@@ -4045,6 +4072,11 @@ snapshots:
       get-intrinsic: 1.3.0
       is-array-buffer: 3.0.5
 
+  assemblyscript@0.28.19:
+    dependencies:
+      binaryen: 130.0.0-nightly.20260609
+      long: 5.3.2
+
   assertion-error@2.0.1: {}
 
   async-function@1.0.0: {}
@@ -4072,6 +4104,8 @@ snapshots:
   baseline-browser-mapping@2.10.34: {}
 
   bcryptjs@2.4.3: {}
+
+  binaryen@130.0.0-nightly.20260609: {}
 
   body-parser@2.2.2:
     dependencies:
@@ -5097,6 +5131,8 @@ snapshots:
       slice-ansi: 7.1.2
       strip-ansi: 7.2.0
       wrap-ansi: 9.0.2
+
+  long@5.3.2: {}
 
   loose-envify@1.4.0:
     dependencies:

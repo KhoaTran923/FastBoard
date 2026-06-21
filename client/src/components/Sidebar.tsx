@@ -1,4 +1,4 @@
-import { Logo } from './Logo';
+import { Logo } from './common/Logo';
 import { ThemeToggle } from './ThemeToggle';
 import { useAuthStore } from '../stores/authStore';
 import { useBoardStore } from '../stores/boardStore';
