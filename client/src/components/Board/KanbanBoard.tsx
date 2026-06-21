@@ -1,53 +1,146 @@
-import { useMemo } from 'react';
-import { Column } from './Column';
+import { useMemo, useState } from 'react';
+import {
+  DndContext,
+  DragOverlay,
+  PointerSensor,
+  closestCorners,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+  type DragStartEvent,
+} from '@dnd-kit/core';
+import { BoardColumn } from './BoardColumn';
+import { TaskCard } from './TaskCard';
+import { TaskDetailModal } from '../modals/TaskDetailModal';
 import { useWasm } from '../../hooks/useWasm';
+import { useBoardStore } from '../../stores/boardStore';
 import { useSearchStore } from '../../stores/searchStore';
-import type { BoardDetail } from '../../types';
+import type { BoardDetail, Task } from '../../types';
 
 interface KanbanBoardProps {
   board: BoardDetail;
   onNewColumn: () => void;
 }
 
+function NewColumnButton({ onClick }: { onClick: () => void }) {
+  return (
+    <button
+      onClick={onClick}
+      className="mt-9.75 flex h-[calc(100%-39px)] w-70 shrink-0 items-center justify-center rounded-md bg-linear-to-b from-black/3 to-black/1 text-xl font-bold text-medium-grey transition-colors hover:text-purple dark:from-dark-grey/40 dark:to-dark-grey/10"
+    >
+      + New Column
+    </button>
+  );
+}
+
 export function KanbanBoard({ board, onNewColumn }: KanbanBoardProps) {
   const query = useSearchStore((s) => s.query);
   const { match } = useWasm();
+  const moveTask = useBoardStore((s) => s.moveTask);
+  const renameColumn = useBoardStore((s) => s.renameColumn);
+  const deleteColumn = useBoardStore((s) => s.deleteColumn);
 
-  // Filter each column's tasks by the search query (WASM KMP, JS fallback).
-  const columns = useMemo(
-    () =>
-      board.columns.map((column) => ({
-        ...column,
-        tasks: column.tasks.filter((task) =>
-          match(`${task.title} ${task.description ?? ''}`, query)
-        ),
-      })),
-    [board.columns, query, match]
+  const [activeTask, setActiveTask] = useState<Task | null>(null);
+  const [detailTask, setDetailTask] = useState<Task | null>(null);
+
+  // A small drag threshold lets a plain click still open the task detail modal.
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
+
+  const columns = board.columns;
+  const searching = query.trim().length > 0;
+
+  const findColumn = (id: string) =>
+    columns.find((c) => c.id === id || c.tasks.some((t) => t.id === id));
+
+  function handleDragStart(event: DragStartEvent) {
+    const id = event.active.id as string;
+    setActiveTask(columns.flatMap((c) => c.tasks).find((t) => t.id === id) ?? null);
+  }
+
+  function handleDragEnd(event: DragEndEvent) {
+    setActiveTask(null);
+    const { active, over } = event;
+    if (!over) return;
+    const activeId = active.id as string;
+    const overId = over.id as string;
+    if (activeId === overId) return;
+
+    const source = findColumn(activeId);
+    const target = findColumn(overId);
+    if (!source || !target) return;
+
+    // Dropped on a task → take its slot; dropped on the column → append.
+    const overTaskIndex = target.tasks.findIndex((t) => t.id === overId);
+    const toIndex = overTaskIndex >= 0 ? overTaskIndex : target.tasks.length;
+    void moveTask(activeId, target.id, toIndex);
+  }
+
+  const detailModal = detailTask && (
+    <TaskDetailModal task={detailTask} onClose={() => setDetailTask(null)} />
   );
 
-  const totalMatches = columns.reduce((sum, c) => sum + c.tasks.length, 0);
+  // While searching: read-only, filtered (WASM) view — dragging is disabled.
+  const filtered = useMemo(
+    () =>
+      columns.map((c) => ({
+        ...c,
+        tasks: c.tasks.filter((t) => match(`${t.title} ${t.description ?? ''}`, query)),
+      })),
+    [columns, query, match]
+  );
 
-  if (query.trim() && totalMatches === 0) {
+  if (searching) {
+    const total = filtered.reduce((sum, c) => sum + c.tasks.length, 0);
+    if (total === 0) {
+      return (
+        <div className="flex h-full flex-col items-center justify-center gap-2 px-6 text-center">
+          <p className="text-lg font-bold text-medium-grey">No tasks match “{query}”.</p>
+          <p className="text-sm text-medium-grey">Try a different search term.</p>
+        </div>
+      );
+    }
     return (
-      <div className="flex h-full flex-col items-center justify-center gap-2 px-6 text-center">
-        <p className="text-lg font-bold text-medium-grey">No tasks match “{query}”.</p>
-        <p className="text-sm text-medium-grey">Try a different search term.</p>
+      <div className="flex h-full gap-6 overflow-auto p-6">
+        {filtered.map((c, i) => (
+          <BoardColumn
+            key={c.id}
+            column={c}
+            index={i}
+            sortable={false}
+            onTaskClick={setDetailTask}
+            onRename={(name) => void renameColumn(c.id, name)}
+            onDelete={() => void deleteColumn(c.id)}
+          />
+        ))}
+        <NewColumnButton onClick={onNewColumn} />
+        {detailModal}
       </div>
     );
   }
 
   return (
-    <div className="flex h-full gap-6 overflow-auto p-6">
-      {columns.map((column, index) => (
-        <Column key={column.id} column={column} index={index} />
-      ))}
-
-      <button
-        onClick={onNewColumn}
-        className="mt-[39px] flex h-[calc(100%-39px)] w-[280px] shrink-0 items-center justify-center rounded-md bg-gradient-to-b from-black/[0.03] to-black/[0.01] text-xl font-bold text-medium-grey transition-colors hover:text-purple dark:from-dark-grey/40 dark:to-dark-grey/10"
-      >
-        + New Column
-      </button>
-    </div>
+    <DndContext
+      sensors={sensors}
+      collisionDetection={closestCorners}
+      onDragStart={handleDragStart}
+      onDragEnd={handleDragEnd}
+    >
+      <div className="flex h-full gap-6 overflow-auto p-6">
+        {columns.map((c, i) => (
+          <BoardColumn
+            key={c.id}
+            column={c}
+            index={i}
+            sortable
+            onTaskClick={setDetailTask}
+            onRename={(name) => void renameColumn(c.id, name)}
+            onDelete={() => void deleteColumn(c.id)}
+          />
+        ))}
+        <NewColumnButton onClick={onNewColumn} />
+      </div>
+      <DragOverlay>{activeTask ? <TaskCard task={activeTask} /> : null}</DragOverlay>
+      {detailModal}
+    </DndContext>
   );
 }

@@ -1,21 +1,77 @@
+import { useBoardStore } from '../../stores/boardStore';
 import type { Task } from '../../types';
 
-const PRIORITY_COLOR: Record<string, string> = {
-  low: 'bg-[#67E2AE]',
-  medium: 'bg-[#E5A449]',
-  high: 'bg-[#E5497E]',
-  urgent: 'bg-red',
+// Priority badge colours (background tint + text).
+const PRIORITY_STYLES: Record<string, string> = {
+  low: 'bg-[#67E2AE]/20 text-[#1f8a4c]',
+  medium: 'bg-[#E5A449]/20 text-[#a96a00]',
+  high: 'bg-[#E5497E]/20 text-[#c92a64]',
+  urgent: 'bg-red/15 text-red',
 };
 
-export function TaskCard({ task }: { task: Task }) {
+const capitalize = (s: string) => s[0].toUpperCase() + s.slice(1);
+
+function formatDueDate(value: string): string {
+  const date = new Date(`${value.slice(0, 10)}T00:00:00`);
+  if (Number.isNaN(date.getTime())) return value;
+  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+}
+
+interface TaskCardProps {
+  task: Task;
+  onClick?: () => void;
+}
+
+export function TaskCard({ task, onClick }: TaskCardProps) {
+  const members = useBoardStore((s) => s.members);
+  const assignee = task.assignee_id ? members.find((m) => m.id === task.assignee_id) : undefined;
+
   return (
-    <div className="group cursor-pointer rounded-lg bg-white px-4 py-5 shadow-[0_4px_6px_rgba(54,78,126,0.1)] dark:bg-dark-grey">
+    <div
+      onClick={onClick}
+      className="group cursor-pointer rounded-lg bg-white px-4 py-4 shadow-[0_4px_6px_rgba(54,78,126,0.1)] dark:bg-dark-grey"
+    >
       <h4 className="font-bold text-black group-hover:text-purple dark:text-white">{task.title}</h4>
-      {task.priority && (
-        <p className="mt-2 flex items-center gap-2 text-xs font-bold text-medium-grey">
-          <span className={`inline-block h-2 w-2 rounded-full ${PRIORITY_COLOR[task.priority]}`} />
-          {task.priority[0].toUpperCase() + task.priority.slice(1)} priority
-        </p>
+
+      {(task.priority || task.due_date) && (
+        <div className="mt-3 flex flex-wrap items-center gap-2">
+          {task.priority && (
+            <span
+              className={`rounded px-2 py-0.5 text-[11px] font-bold ${PRIORITY_STYLES[task.priority]}`}
+            >
+              {capitalize(task.priority)}
+            </span>
+          )}
+          {task.due_date && (
+            <span className="flex items-center gap-1 text-xs font-medium text-medium-grey">
+              <svg
+                width="12"
+                height="12"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                aria-hidden
+              >
+                <rect x="3" y="4" width="18" height="18" rx="2" />
+                <line x1="3" y1="10" x2="21" y2="10" />
+                <line x1="8" y1="2" x2="8" y2="6" />
+                <line x1="16" y1="2" x2="16" y2="6" />
+              </svg>
+              {formatDueDate(task.due_date)}
+            </span>
+          )}
+        </div>
+      )}
+
+      {assignee && (
+        // Avatar is a coloured initial for now; swap for a Gravatar image later.
+        <div className="mt-3 flex items-center gap-2" title={assignee.email}>
+          <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-purple/20 text-[10px] font-bold uppercase text-purple">
+            {assignee.email[0]}
+          </span>
+          <span className="truncate text-xs text-medium-grey">{assignee.email}</span>
+        </div>
       )}
     </div>
   );

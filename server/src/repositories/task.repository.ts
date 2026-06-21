@@ -34,27 +34,27 @@ export const TaskRepository = {
   },
 
   async update(id: string, data: UpdateTaskInput): Promise<Task | null> {
+    const sets: string[] = [];
+    const values: unknown[] = [];
+    const assign = (column: string, value: unknown) => {
+      values.push(value);
+      sets.push(`${column} = $${values.length}`);
+    };
+
+    if (data.column_id !== undefined) assign('column_id', data.column_id);
+    if (data.title !== undefined) assign('title', data.title);
+    if (data.description !== undefined) assign('description', data.description);
+    if (data.priority !== undefined) assign('priority', data.priority);
+    if (data.due_date !== undefined) assign('due_date', data.due_date);
+    if (data.assignee_id !== undefined) assign('assignee_id', data.assignee_id);
+    if (data.position !== undefined) assign('position', data.position);
+
+    if (sets.length === 0) return this.findById(id);
+
+    values.push(id);
     const rows = await query<Task>(
-      `UPDATE tasks SET
-         column_id   = COALESCE($1, column_id),
-         title       = COALESCE($2, title),
-         description = COALESCE($3, description),
-         priority    = COALESCE($4, priority),
-         due_date    = COALESCE($5, due_date),
-         assignee_id = COALESCE($6, assignee_id),
-         position    = COALESCE($7, position)
-       WHERE id = $8
-       RETURNING *`,
-      [
-        data.column_id ?? null,
-        data.title ?? null,
-        data.description ?? null,
-        data.priority ?? null,
-        data.due_date ?? null,
-        data.assignee_id ?? null,
-        data.position ?? null,
-        id,
-      ]
+      `UPDATE tasks SET ${sets.join(', ')} WHERE id = $${values.length} RETURNING *`,
+      values
     );
     return rows[0] ?? null;
   },

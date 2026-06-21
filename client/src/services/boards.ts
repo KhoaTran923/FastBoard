@@ -1,5 +1,5 @@
 import api from './http';
-import type { ApiResponse, Board, Column, Project, Task } from '../types';
+import type { ApiResponse, Board, Column, Member, Project, Task } from '../types';
 
 // ── Projects ──────────────────────────────────────────────────────────────────
 export async function getProjects(): Promise<Project[]> {
@@ -36,6 +36,33 @@ export async function createColumn(
   return data.data as Column;
 }
 
+export async function renameColumn(
+  projectId: string,
+  boardId: string,
+  columnId: string,
+  name: string
+): Promise<Column> {
+  const { data } = await api.patch<ApiResponse<Column>>(
+    `/projects/${projectId}/boards/${boardId}/columns/${columnId}`,
+    { name }
+  );
+  return data.data as Column;
+}
+
+export async function deleteColumn(
+  projectId: string,
+  boardId: string,
+  columnId: string
+): Promise<void> {
+  await api.delete(`/projects/${projectId}/boards/${boardId}/columns/${columnId}`);
+}
+
+// ── Members ───────────────────────────────────────────────────────────────────
+export async function getMembers(projectId: string): Promise<Member[]> {
+  const { data } = await api.get<ApiResponse<Member[]>>(`/projects/${projectId}/members`);
+  return data.data ?? [];
+}
+
 // ── Tasks ─────────────────────────────────────────────────────────────────────
 export async function getColumnTasks(
   projectId: string,
@@ -65,4 +92,52 @@ export async function createTask(
     input
   );
   return data.data as Task;
+}
+
+/** Editable task fields; `null` clears a field, omitting it leaves it unchanged. */
+export interface UpdateTaskInput {
+  title?: string;
+  description?: string | null;
+  priority?: Task['priority'] | null;
+  due_date?: string | null;
+  assignee_id?: string | null;
+  column_id?: string;
+}
+
+export async function updateTask(
+  projectId: string,
+  boardId: string,
+  columnId: string,
+  taskId: string,
+  patch: UpdateTaskInput
+): Promise<Task> {
+  const { data } = await api.put<ApiResponse<Task>>(
+    `/projects/${projectId}/boards/${boardId}/columns/${columnId}/tasks/${taskId}`,
+    patch
+  );
+  return data.data as Task;
+}
+
+export async function moveTask(
+  projectId: string,
+  boardId: string,
+  columnId: string,
+  taskId: string,
+  toColumnId: string,
+  position: number
+): Promise<Task> {
+  const { data } = await api.patch<ApiResponse<Task>>(
+    `/projects/${projectId}/boards/${boardId}/columns/${columnId}/tasks/${taskId}/move`,
+    { column_id: toColumnId, position }
+  );
+  return data.data as Task;
+}
+
+export async function deleteTask(
+  projectId: string,
+  boardId: string,
+  columnId: string,
+  taskId: string
+): Promise<void> {
+  await api.delete(`/projects/${projectId}/boards/${boardId}/columns/${columnId}/tasks/${taskId}`);
 }

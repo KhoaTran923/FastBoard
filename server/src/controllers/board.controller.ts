@@ -54,6 +54,20 @@ export const BoardController = {
     }
   },
 
+  async renameColumn(req: AuthenticatedRequest, res: Response) {
+    try {
+      const column = await BoardService.renameColumn(
+        req.params.columnId!,
+        req.body.name,
+        req.user.userId
+      );
+      res.json({ success: true, data: column });
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Error';
+      res.status(403).json({ success: false, error: message });
+    }
+  },
+
   async deleteColumn(req: AuthenticatedRequest, res: Response) {
     try {
       await BoardService.deleteColumn(req.params.columnId!, req.user.userId);

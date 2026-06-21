@@ -57,6 +57,16 @@ export interface BoardDetail extends Board {
   columns: ColumnWithTasks[];
 }
 
+/** A project member, as returned by GET /projects/:id/members (user + role). */
+export interface Member {
+  id: string;
+  email: string;
+  full_name: string;
+  avatar_url?: string | null;
+  role: UserRole;
+  joined_at: string;
+}
+
 export interface AuthResponse {
   user: User;
   access_token: string;

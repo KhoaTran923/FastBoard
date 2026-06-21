@@ -46,11 +46,21 @@ export const BoardService = {
     return BoardRepository.createColumn({ board_id: boardId, name });
   },
 
+  async renameColumn(columnId: string, name: string, userId: string) {
+    const col = await BoardRepository.findColumnById(columnId);
+    if (!col) throw new Error('Column not found');
+    const board = await BoardRepository.findById(col.board_id);
+    if (!board) throw new Error('Board not found');
+    const member = await ProjectRepository.getMember(board.project_id, userId);
+    const project = await ProjectRepository.findById(board.project_id);
+    if (!project) throw new Error('Project not found');
+    if (!member && project.owner_id !== userId) throw new Error('Access denied');
+    if (member?.role === 'viewer') throw new Error('Viewers cannot rename columns');
+    return BoardRepository.updateColumn(columnId, name);
+  },
+
   async deleteColumn(columnId: string, userId: string) {
-    // Find board via column then check permissions
-    const [col] = await import('../db/pool.js').then(({ query }) =>
-      query<{ board_id: string }>('SELECT board_id FROM columns WHERE id = $1', [columnId])
-    );
+    const col = await BoardRepository.findColumnById(columnId);
     if (!col) throw new Error('Column not found');
     const board = await BoardRepository.findById(col.board_id);
     if (!board) throw new Error('Board not found');

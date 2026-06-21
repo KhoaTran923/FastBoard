@@ -32,7 +32,7 @@ export function Sidebar({ onCreateBoard, onHide }: SidebarProps) {
   const authed = status === 'authenticated';
 
   return (
-    <aside className="flex w-[300px] shrink-0 flex-col border-r border-lines-light bg-white dark:border-lines-dark dark:bg-dark-grey">
+    <aside className="flex w-75 shrink-0 flex-col border-r border-lines-light bg-white dark:border-lines-dark dark:bg-dark-grey">
       <div className="px-6 py-5">
         <Logo />
       </div>

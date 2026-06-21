@@ -44,7 +44,20 @@ export const BoardRepository = {
     return rows[0]!;
   },
 
+  async updateColumn(id: string, name: string): Promise<Column | null> {
+    const rows = await query<Column>('UPDATE columns SET name = $1 WHERE id = $2 RETURNING *', [
+      name,
+      id,
+    ]);
+    return rows[0] ?? null;
+  },
+
   async deleteColumn(id: string): Promise<void> {
     await query('DELETE FROM columns WHERE id = $1', [id]);
+  },
+
+  async findColumnById(id: string): Promise<Column | null> {
+    const rows = await query<Column>('SELECT * FROM columns WHERE id = $1 LIMIT 1', [id]);
+    return rows[0] ?? null;
   },
 };

@@ -30,7 +30,7 @@ export function ThemeToggle() {
       >
         <span
           className={`absolute top-1/2 h-3.5 w-3.5 -translate-y-1/2 rounded-full bg-white transition-all ${
-            isDark ? 'left-[22px]' : 'left-1'
+            isDark ? 'left-5.5' : 'left-1'
           }`}
         />
       </button>

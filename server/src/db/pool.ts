@@ -2,6 +2,7 @@ import pg from 'pg';
 import 'dotenv/config';
 
 const { Pool } = pg;
+pg.types.setTypeParser(pg.types.builtins.DATE, (value) => value);
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
