@@ -5,6 +5,7 @@ import cors from 'cors';
 import { apiLimiter } from './middlewares/rateLimit.middleware.js';
 import authRoutes from './routes/auth.routes.js';
 import projectRoutes from './routes/project.routes.js';
+import userRoutes from './routes/user.routes.js';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -28,6 +29,7 @@ app.get('/api/health', (_req, res) => {
 
 // ── Routes ──────────────────────────────────────────────
 app.use('/api/auth', authRoutes);
+app.use('/api/users', userRoutes);
 app.use('/api/projects', projectRoutes);
 
 // ── Global Error Handler ────────────────────────────────
@@ -38,8 +40,8 @@ app.use((err: Error, _req: express.Request, res: express.Response, _next: expres
 
 // ── Start ───────────────────────────────────────────────
 app.listen(PORT, () => {
-  console.log(`🚀 FastBoard server running on http://localhost:${PORT}`);
-  console.log(`   Environment: ${process.env.NODE_ENV ?? 'development'}`);
+  console.log(`FastBoard server running on http://localhost:${PORT}`);
+  console.log(`Environment: ${process.env.NODE_ENV ?? 'development'}`);
 });
 
 export default app;

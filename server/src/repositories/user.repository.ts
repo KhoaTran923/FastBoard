@@ -28,6 +28,16 @@ export const UserRepository = {
     return rows[0]!;
   },
 
+  async searchByEmail(term: string, limit = 10): Promise<User[]> {
+    return query<User>(
+      `SELECT id, email, full_name, avatar_url, created_at FROM users
+       WHERE email ILIKE $1
+       ORDER BY email ASC
+       LIMIT $2`,
+      [`%${term}%`, limit]
+    );
+  },
+
   async findByEmailWithPassword(email: string): Promise<(User & { password: string }) | null> {
     const rows = await query<User & { password: string }>(
       'SELECT * FROM users WHERE email = $1 LIMIT 1',

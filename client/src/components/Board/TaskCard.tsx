@@ -17,15 +17,15 @@ function formatDueDate(value: string): string {
   return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 }
 
-function Assignee({ email }: { email: string }) {
-  // Avatar is a coloured initial for now; swap for a Gravatar image later.
+function Avatar({ email }: { email: string }) {
+  // First-letter avatar for now; swap for a Gravatar image later.
   return (
-    <div className="flex items-center gap-2" title={email}>
-      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-purple/20 text-[10px] font-bold uppercase text-purple">
-        {email[0]}
-      </span>
-      <span className="truncate text-xs text-medium-grey">{email}</span>
-    </div>
+    <span
+      title={email}
+      className="flex h-7 w-7 items-center justify-center rounded-full bg-purple/20 text-[11px] font-bold uppercase text-purple ring-2 ring-white dark:ring-dark-grey"
+    >
+      {email[0]}
+    </span>
   );
 }
 
@@ -83,14 +83,14 @@ export function TaskCard({ task, onClick }: TaskCardProps) {
       )}
 
       {assignees.length > 0 && (
-        <div className="mt-3 space-y-1.5">
-          {assignees.slice(0, 2).map((m) => (
-            <Assignee key={m.id} email={m.email} />
+        <div className="mt-3.5 flex items-center -space-x-2">
+          {assignees.slice(0, 3).map((m) => (
+            <Avatar key={m.id} email={m.email} />
           ))}
-          {assignees.length > 2 && (
-            <p className="pl-8 text-xs font-medium text-medium-grey">
-              +{assignees.length - 2} more
-            </p>
+          {assignees.length > 3 && (
+            <span className="flex h-7 w-7 items-center justify-center rounded-full bg-medium-grey/25 text-[10px] font-bold text-medium-grey ring-2 ring-white dark:ring-dark-grey">
+              +{assignees.length - 3}
+            </span>
           )}
         </div>
       )}

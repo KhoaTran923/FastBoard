@@ -1,9 +1,11 @@
 import { create } from 'zustand';
 import {
+  addMember as addMemberApi,
   createBoard as createBoardApi,
   createColumn,
   createProject,
   createTask,
+  deleteBoard as deleteBoardApi,
   deleteColumn as deleteColumnApi,
   deleteTask as deleteTaskApi,
   getBoards,
@@ -11,6 +13,7 @@ import {
   getMembers,
   getProjects,
   moveTask as moveTaskApi,
+  renameBoard as renameBoardApi,
   renameColumn as renameColumnApi,
   updateTask as updateTaskApi,
   type CreateTaskInput,
@@ -36,6 +39,9 @@ interface BoardState {
   init: () => Promise<void>;
   selectBoard: (boardId: string) => Promise<void>;
   createBoard: (name: string, columnNames?: string[]) => Promise<void>;
+  renameBoard: (boardId: string, name: string) => Promise<void>;
+  deleteBoard: (boardId: string) => Promise<void>;
+  addMember: (userId: string) => Promise<void>;
   addColumn: (name: string) => Promise<void>;
   renameColumn: (columnId: string, name: string) => Promise<void>;
   deleteColumn: (columnId: string) => Promise<void>;
@@ -115,6 +121,50 @@ export const useBoardStore = create<BoardState>((set, get) => ({
     const boards = await getBoards(workspaceId);
     set({ boards });
     await get().selectBoard(board.id);
+  },
+
+  renameBoard: async (boardId, name) => {
+    const { workspaceId, boards, activeBoard } = get();
+    if (!workspaceId) return;
+    const snapshot = { boards, activeBoard };
+    set({
+      boards: boards.map((b) => (b.id === boardId ? { ...b, name } : b)),
+      activeBoard:
+        activeBoard && activeBoard.id === boardId ? { ...activeBoard, name } : activeBoard,
+    });
+    try {
+      await renameBoardApi(workspaceId, boardId, name);
+    } catch (err) {
+      set({ ...snapshot, error: apiErrorMessage(err) });
+    }
+  },
+
+  deleteBoard: async (boardId) => {
+    const { workspaceId, boards, activeBoardId, activeBoard } = get();
+    if (!workspaceId) return;
+    const snapshot = { boards, activeBoardId, activeBoard };
+    const remaining = boards.filter((b) => b.id !== boardId);
+    set({ boards: remaining });
+    if (activeBoardId === boardId) {
+      if (remaining.length > 0) {
+        await get().selectBoard(remaining[0].id);
+      } else {
+        set({ activeBoardId: null, activeBoard: null });
+      }
+    }
+    try {
+      await deleteBoardApi(workspaceId, boardId);
+    } catch (err) {
+      set({ ...snapshot, error: apiErrorMessage(err) });
+    }
+  },
+
+  addMember: async (userId) => {
+    const { workspaceId } = get();
+    if (!workspaceId) return;
+    await addMemberApi(workspaceId, userId);
+    const members = await getMembers(workspaceId);
+    set({ members });
   },
 
   addColumn: async (name) => {

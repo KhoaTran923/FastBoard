@@ -23,6 +23,14 @@ export const BoardRepository = {
     return rows[0]!;
   },
 
+  async update(id: string, name: string): Promise<Board | null> {
+    const rows = await query<Board>('UPDATE boards SET name = $1 WHERE id = $2 RETURNING *', [
+      name,
+      id,
+    ]);
+    return rows[0] ?? null;
+  },
+
   async delete(id: string): Promise<void> {
     await query('DELETE FROM boards WHERE id = $1', [id]);
   },

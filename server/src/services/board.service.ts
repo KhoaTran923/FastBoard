@@ -27,6 +27,14 @@ export const BoardService = {
     return BoardRepository.create({ project_id: projectId, name });
   },
 
+  async renameBoard(boardId: string, name: string, userId: string) {
+    const board = await BoardRepository.findById(boardId);
+    if (!board) throw new Error('Board not found');
+    const member = await ProjectRepository.getMember(board.project_id, userId);
+    if (!member || member.role !== 'admin') throw new Error('Forbidden');
+    return BoardRepository.update(boardId, name);
+  },
+
   async deleteBoard(boardId: string, userId: string) {
     const board = await BoardRepository.findById(boardId);
     if (!board) throw new Error('Board not found');

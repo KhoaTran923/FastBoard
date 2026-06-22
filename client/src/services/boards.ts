@@ -1,5 +1,5 @@
 import api from './http';
-import type { ApiResponse, Board, Column, Member, Project, Task } from '../types';
+import type { ApiResponse, Board, Column, Member, Project, Task, UserRole } from '../types';
 
 // ── Projects ──────────────────────────────────────────────────────────────────
 export async function getProjects(): Promise<Project[]> {
@@ -22,6 +22,21 @@ export async function getBoards(projectId: string): Promise<Board[]> {
 export async function createBoard(projectId: string, name: string): Promise<Board> {
   const { data } = await api.post<ApiResponse<Board>>(`/projects/${projectId}/boards`, { name });
   return data.data as Board;
+}
+
+export async function renameBoard(
+  projectId: string,
+  boardId: string,
+  name: string
+): Promise<Board> {
+  const { data } = await api.patch<ApiResponse<Board>>(`/projects/${projectId}/boards/${boardId}`, {
+    name,
+  });
+  return data.data as Board;
+}
+
+export async function deleteBoard(projectId: string, boardId: string): Promise<void> {
+  await api.delete(`/projects/${projectId}/boards/${boardId}`);
 }
 
 export async function createColumn(
@@ -61,6 +76,14 @@ export async function deleteColumn(
 export async function getMembers(projectId: string): Promise<Member[]> {
   const { data } = await api.get<ApiResponse<Member[]>>(`/projects/${projectId}/members`);
   return data.data ?? [];
+}
+
+export async function addMember(
+  projectId: string,
+  userId: string,
+  role: UserRole = 'member'
+): Promise<void> {
+  await api.post(`/projects/${projectId}/members`, { user_id: userId, role });
 }
 
 // ── Tasks ─────────────────────────────────────────────────────────────────────

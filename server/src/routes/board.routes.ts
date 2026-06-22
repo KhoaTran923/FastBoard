@@ -9,6 +9,7 @@ const router = Router({ mergeParams: true });
 
 router.get('/', asAuth(BoardController.getBoards));
 router.post('/', validate(boardNameSchema), asAuth(BoardController.createBoard));
+router.patch('/:boardId', validate(boardNameSchema), asAuth(BoardController.renameBoard));
 router.delete('/:boardId', asAuth(BoardController.deleteBoard));
 
 // Columns

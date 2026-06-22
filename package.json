@@ -13,7 +13,8 @@
     "test": "pnpm --filter @repo/server run test",
     "db:up": "docker compose up -d",
     "db:down": "docker compose down",
-    "migrate": "pnpm --filter @repo/server run migrate"
+    "migrate": "pnpm --filter @repo/server run migrate",
+    "seed": "pnpm --filter @repo/server run seed"
   },
   "keywords": [],
   "author": "",

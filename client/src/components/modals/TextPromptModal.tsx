@@ -8,6 +8,7 @@ interface TextPromptModalProps {
   label: string;
   placeholder?: string;
   submitLabel: string;
+  initialValue?: string;
   onClose: () => void;
   onSubmit: (value: string) => Promise<void> | void;
 }
@@ -17,10 +18,11 @@ export function TextPromptModal({
   label,
   placeholder,
   submitLabel,
+  initialValue = '',
   onClose,
   onSubmit,
 }: TextPromptModalProps) {
-  const [value, setValue] = useState('');
+  const [value, setValue] = useState(initialValue);
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
 

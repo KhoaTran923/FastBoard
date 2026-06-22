@@ -1,7 +1,11 @@
+import { useState } from 'react';
 import { Logo } from './common/Logo';
 import { ThemeToggle } from './ThemeToggle';
+import { AddMemberModal } from './modals/AddMemberModal';
+import { TextPromptModal } from './modals/TextPromptModal';
 import { useAuthStore } from '../stores/authStore';
 import { useBoardStore } from '../stores/boardStore';
+import type { Board } from '../types';
 
 function BoardIcon({ className = '' }: { className?: string }) {
   return (
@@ -28,6 +32,12 @@ export function Sidebar({ onCreateBoard, onHide }: SidebarProps) {
   const boards = useBoardStore((s) => s.boards);
   const activeBoardId = useBoardStore((s) => s.activeBoardId);
   const selectBoard = useBoardStore((s) => s.selectBoard);
+  const renameBoard = useBoardStore((s) => s.renameBoard);
+  const deleteBoard = useBoardStore((s) => s.deleteBoard);
+
+  const [menuFor, setMenuFor] = useState<string | null>(null);
+  const [renameTarget, setRenameTarget] = useState<Board | null>(null);
+  const [addMemberOpen, setAddMemberOpen] = useState(false);
 
   const authed = status === 'authenticated';
 
@@ -42,22 +52,85 @@ export function Sidebar({ onCreateBoard, onHide }: SidebarProps) {
           {authed ? `All Boards (${boards.length})` : 'No Boards'}
         </p>
 
-        <nav className="pr-6">
+        <nav className="pr-4">
           {boards.map((board) => {
             const isActive = board.id === activeBoardId;
             return (
-              <button
+              <div
                 key={board.id}
-                onClick={() => selectBoard(board.id)}
-                className={`flex w-full items-center gap-3 rounded-r-full py-3.5 pl-6 text-left text-[15px] font-bold transition-colors ${
+                className={`flex items-center rounded-r-full pr-1.5 transition-colors ${
                   isActive
                     ? 'bg-purple text-white'
                     : 'text-medium-grey hover:bg-purple/10 hover:text-purple dark:hover:bg-white'
                 }`}
               >
-                <BoardIcon />
-                <span className="truncate">{board.name}</span>
-              </button>
+                <button
+                  onClick={() => selectBoard(board.id)}
+                  className="flex min-w-0 flex-1 items-center gap-3 py-3.5 pl-6 text-left text-[15px] font-bold"
+                >
+                  <BoardIcon className="shrink-0" />
+                  <span className="truncate">{board.name}</span>
+                </button>
+
+                <div className="relative shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => setMenuFor((id) => (id === board.id ? null : board.id))}
+                    aria-label="Board options"
+                    className={`flex h-7 w-7 items-center justify-center rounded-full ${
+                      isActive
+                        ? 'text-white/80 hover:text-white'
+                        : 'text-medium-grey hover:text-purple'
+                    }`}
+                  >
+                    <svg width="4" height="16" viewBox="0 0 5 20" fill="currentColor" aria-hidden>
+                      <circle cx="2.5" cy="2.5" r="2.5" />
+                      <circle cx="2.5" cy="10" r="2.5" />
+                      <circle cx="2.5" cy="17.5" r="2.5" />
+                    </svg>
+                  </button>
+
+                  {menuFor === board.id && (
+                    <>
+                      <div className="fixed inset-0 z-10" onClick={() => setMenuFor(null)} />
+                      <div className="absolute right-0 top-8 z-20 w-40 rounded-lg bg-white p-1.5 shadow-xl dark:bg-very-dark">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setMenuFor(null);
+                            setRenameTarget(board);
+                          }}
+                          className="block w-full rounded px-3 py-1.5 text-left text-sm font-medium text-black hover:bg-purple/10 dark:text-white"
+                        >
+                          Rename
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setMenuFor(null);
+                            setAddMemberOpen(true);
+                          }}
+                          className="block w-full rounded px-3 py-1.5 text-left text-sm font-medium text-black hover:bg-purple/10 dark:text-white"
+                        >
+                          Add assignee
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setMenuFor(null);
+                            if (window.confirm(`Delete board “${board.name}” and all its tasks?`)) {
+                              void deleteBoard(board.id);
+                            }
+                          }}
+                          className="block w-full rounded px-3 py-1.5 text-left text-sm font-medium text-red hover:bg-red/10"
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </>
+                  )}
+                </div>
+              </div>
             );
           })}
 
@@ -83,6 +156,18 @@ export function Sidebar({ onCreateBoard, onHide }: SidebarProps) {
           Hide Sidebar
         </button>
       </div>
+
+      {renameTarget && (
+        <TextPromptModal
+          title="Rename Board"
+          label="Board Name"
+          submitLabel="Rename"
+          initialValue={renameTarget.name}
+          onClose={() => setRenameTarget(null)}
+          onSubmit={(name) => renameBoard(renameTarget.id, name)}
+        />
+      )}
+      {addMemberOpen && <AddMemberModal onClose={() => setAddMemberOpen(false)} />}
     </aside>
   );
 }

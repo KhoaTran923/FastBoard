@@ -30,6 +30,20 @@ export const BoardController = {
     }
   },
 
+  async renameBoard(req: AuthenticatedRequest, res: Response) {
+    try {
+      const board = await BoardService.renameBoard(
+        req.params.boardId!,
+        req.body.name,
+        req.user.userId
+      );
+      res.json({ success: true, data: board });
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Error';
+      res.status(403).json({ success: false, error: message });
+    }
+  },
+
   async deleteBoard(req: AuthenticatedRequest, res: Response) {
     try {
       await BoardService.deleteBoard(req.params.boardId!, req.user.userId);
