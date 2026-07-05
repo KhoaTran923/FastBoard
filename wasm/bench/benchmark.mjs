@@ -11,11 +11,33 @@ const SYNC_ITERS = 200;
 const API_ITERS = 50;
 const QUERY = 'search';
 
-// ── Corpus of N task titles ──────────────────────────────────────────────────
+// Corpus of N task titles
 const WORDS = [
-  'build', 'design', 'review', 'test', 'deploy', 'refactor', 'search', 'board',
-  'task', 'user', 'auth', 'column', 'sprint', 'bug', 'feature', 'docs', 'api',
-  'cache', 'token', 'login', 'flow', 'model', 'query', 'index', 'schema',
+  'build',
+  'design',
+  'review',
+  'test',
+  'deploy',
+  'refactor',
+  'search',
+  'board',
+  'task',
+  'user',
+  'auth',
+  'column',
+  'sprint',
+  'bug',
+  'feature',
+  'docs',
+  'api',
+  'cache',
+  'token',
+  'login',
+  'flow',
+  'model',
+  'query',
+  'index',
+  'schema',
 ];
 const pick = () => WORDS[Math.floor(Math.random() * WORDS.length)];
 const corpus = Array.from({ length: N }, () =>
@@ -28,7 +50,7 @@ const countMatches = (q) => {
   return n;
 };
 
-// ── 1) WASM search
+// 1) WASM search
 const wasmBuffer = await readFile(
   join(here, '..', '..', 'client', 'public', 'wasm', 'search.wasm')
 );
@@ -42,12 +64,12 @@ function wasmSearch(q) {
   return n;
 }
 
-// ── 2) JavaScript search (native String.includes, in the browser)
+// 2) JavaScript search (native String.includes)
 function jsSearch(q) {
   return countMatches(q);
 }
 
-// ── 3) API search
+// 3) API search
 const server = createServer((req, res) => {
   const q = (new URL(req.url, 'http://localhost').searchParams.get('q') ?? '').toLowerCase();
   res.setHeader('content-type', 'application/json');
@@ -60,7 +82,7 @@ async function apiSearch(q) {
   return (await res.json()).matches;
 }
 
-// ── Timing helpers ───────────────────────────────────────────────────────────
+// Timing helpers
 function benchSync(fn, iters) {
   fn(QUERY); // warm up
   const start = performance.now();

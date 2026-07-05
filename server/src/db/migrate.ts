@@ -4,10 +4,8 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import pool from './pool.js';
 
-// Migrations live in server/migrations as plain .sql files, applied in filename
-// order (001_..., 002_..., ...). Each is run once, inside a transaction, and
-// recorded in the schema_migrations table so re-running this script only
-// applies new files. (This module is at server/src/db, so go up two levels.)
+// Plain .sql files in server/migrations, applied in filename order. Each runs
+// once inside a transaction and is recorded in schema_migrations.
 const migrationsDir = join(dirname(fileURLToPath(import.meta.url)), '..', '..', 'migrations');
 
 async function migrate(): Promise<void> {

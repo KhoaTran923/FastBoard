@@ -7,8 +7,7 @@ import reactRefresh from 'eslint-plugin-react-refresh';
 import tseslint from 'typescript-eslint';
 import { defineConfig, globalIgnores } from 'eslint/config';
 
-// typescript-eslint can't auto-infer the root in this monorepo (the repo root
-// and this package both hold tsconfig files), so set it explicitly.
+// typescript-eslint cannot auto-infer the monorepo root, so set it explicitly
 const tsconfigRootDir = dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig([

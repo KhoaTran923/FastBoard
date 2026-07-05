@@ -5,6 +5,7 @@ import { Sidebar } from '../components/Sidebar';
 import { AddTaskModal } from '../components/modals/AddTaskModal';
 import { BoardFormModal } from '../components/modals/BoardFormModal';
 import { TextPromptModal } from '../components/modals/TextPromptModal';
+import { useBoardSync } from '../hooks/useBoardSync';
 import { useAuthStore } from '../stores/authStore';
 import { useBoardStore } from '../stores/boardStore';
 
@@ -22,6 +23,9 @@ export function AppLayout() {
   const status = useAuthStore((s) => s.status);
   const navigate = useNavigate();
   const { activeBoard, createBoard, addColumn, addTask } = useBoardStore();
+
+  // Mounted at the layout so every page receives realtime board events
+  useBoardSync(useBoardStore((s) => s.activeBoardId));
 
   const authed = status === 'authenticated';
 

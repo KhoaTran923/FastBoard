@@ -3,12 +3,31 @@ import { useNavigate } from 'react-router-dom';
 import { LogoMark } from './common/Logo';
 import { SearchBar } from './SearchBar';
 import { Button } from './common/ui';
+import { useSocket } from '../hooks/useSocket';
 import { useAuthStore } from '../stores/authStore';
 import { useBoardStore } from '../stores/boardStore';
 
 interface HeaderProps {
   onAddTask: () => void;
   sidebarHidden: boolean;
+}
+
+/** Realtime connection indicator. */
+function LiveBadge() {
+  const { connected } = useSocket();
+  return (
+    <span
+      title={connected ? 'Realtime sync active' : 'Realtime sync offline — changes still save'}
+      className={`flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-bold ${
+        connected ? 'bg-[#67E2AE]/20 text-[#1f8a4c]' : 'bg-medium-grey/15 text-medium-grey'
+      }`}
+    >
+      <span
+        className={`h-1.5 w-1.5 rounded-full ${connected ? 'bg-[#1f8a4c]' : 'bg-medium-grey'}`}
+      />
+      {connected ? 'Live' : 'Offline'}
+    </span>
+  );
 }
 
 export function Header({ onAddTask, sidebarHidden }: HeaderProps) {
@@ -34,6 +53,7 @@ export function Header({ onAddTask, sidebarHidden }: HeaderProps) {
         <h1 className="truncate text-xl font-bold text-black dark:text-white">
           {activeBoard?.name ?? 'FastBoard'}
         </h1>
+        {authed && activeBoard && <LiveBadge />}
       </div>
 
       {/* Centered WASM-powered task search */}

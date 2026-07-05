@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { Logo } from './common/Logo';
 import { ThemeToggle } from './ThemeToggle';
 import { AddMemberModal } from './modals/AddMemberModal';
@@ -6,6 +7,24 @@ import { TextPromptModal } from './modals/TextPromptModal';
 import { useAuthStore } from '../stores/authStore';
 import { useBoardStore } from '../stores/boardStore';
 import type { Board } from '../types';
+
+function ChartIcon({ className = '' }: { className?: string }) {
+  return (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 16 16"
+      fill="currentColor"
+      className={className}
+      aria-hidden
+    >
+      <path d="M1.5 1a.5.5 0 0 0-1 0v13.5A1.5 1.5 0 0 0 2 16h13.5a.5.5 0 0 0 0-1H2a.5.5 0 0 1-.5-.5V1Z" />
+      <rect x="3.5" y="8" width="2.5" height="5" rx="0.75" />
+      <rect x="7.5" y="4" width="2.5" height="9" rx="0.75" />
+      <rect x="11.5" y="6" width="2.5" height="7" rx="0.75" />
+    </svg>
+  );
+}
 
 function BoardIcon({ className = '' }: { className?: string }) {
   return (
@@ -39,6 +58,9 @@ export function Sidebar({ onCreateBoard, onHide }: SidebarProps) {
   const [renameTarget, setRenameTarget] = useState<Board | null>(null);
   const [addMemberOpen, setAddMemberOpen] = useState(false);
 
+  const navigate = useNavigate();
+  const onAnalytics = useLocation().pathname === '/analytics';
+
   const authed = status === 'authenticated';
 
   return (
@@ -54,7 +76,7 @@ export function Sidebar({ onCreateBoard, onHide }: SidebarProps) {
 
         <nav className="pr-4">
           {boards.map((board) => {
-            const isActive = board.id === activeBoardId;
+            const isActive = board.id === activeBoardId && !onAnalytics;
             return (
               <div
                 key={board.id}
@@ -65,7 +87,10 @@ export function Sidebar({ onCreateBoard, onHide }: SidebarProps) {
                 }`}
               >
                 <button
-                  onClick={() => selectBoard(board.id)}
+                  onClick={() => {
+                    void selectBoard(board.id);
+                    if (onAnalytics) navigate('/');
+                  }}
                   className="flex min-w-0 flex-1 items-center gap-3 py-3.5 pl-6 text-left text-[15px] font-bold"
                 >
                   <BoardIcon className="shrink-0" />
@@ -141,6 +166,20 @@ export function Sidebar({ onCreateBoard, onHide }: SidebarProps) {
             <BoardIcon />
             <span>+ Create New Board</span>
           </button>
+
+          {authed && (
+            <button
+              onClick={() => navigate('/analytics')}
+              className={`mt-4 flex w-full items-center gap-3 rounded-r-full py-3.5 pl-6 text-left text-[15px] font-bold transition-colors ${
+                onAnalytics
+                  ? 'bg-purple text-white'
+                  : 'text-medium-grey hover:bg-purple/10 hover:text-purple dark:hover:bg-white'
+              }`}
+            >
+              <ChartIcon className="shrink-0" />
+              <span>Analytics</span>
+            </button>
+          )}
         </nav>
       </div>
 

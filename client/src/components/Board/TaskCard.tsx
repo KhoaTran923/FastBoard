@@ -45,7 +45,30 @@ export function TaskCard({ task, onClick }: TaskCardProps) {
       onClick={onClick}
       className="group cursor-pointer rounded-lg bg-white px-4 py-4 shadow-[0_4px_6px_rgba(54,78,126,0.1)] dark:bg-dark-grey"
     >
-      <h4 className="font-bold text-black group-hover:text-purple dark:text-white">{task.title}</h4>
+      <h4
+        className={`font-bold group-hover:text-purple ${
+          task.completed_at ? 'text-medium-grey line-through' : 'text-black dark:text-white'
+        }`}
+      >
+        {task.completed_at && (
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="#1f8a4c"
+            strokeWidth="3"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-label="Completed"
+            className="mb-0.5 mr-1.5 inline"
+          >
+            <circle cx="12" cy="12" r="10" stroke="#67E2AE" strokeWidth="2" fill="#67E2AE33" />
+            <path d="m8.5 12.5 2.5 2.5 5-6" />
+          </svg>
+        )}
+        {task.title}
+      </h4>
 
       {task.description && (
         <p className="mt-1.5 line-clamp-2 text-xs text-medium-grey">{task.description}</p>

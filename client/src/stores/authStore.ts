@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { fetchMe, loginRequest, registerRequest, type RegisterInput } from '../services/auth';
 import { tokenStore } from '../services/http';
+import { connectSocket, disconnectSocket } from '../services/socket';
 import type { User } from '../types';
 
 type AuthStatus = 'idle' | 'loading' | 'authenticated' | 'unauthenticated';
@@ -28,6 +29,7 @@ export const useAuthStore = create<AuthState>((set) => ({
     try {
       const user = await fetchMe();
       set({ user, status: 'authenticated' });
+      connectSocket();
     } catch {
       tokenStore.clear();
       set({ user: null, status: 'unauthenticated' });
@@ -38,16 +40,19 @@ export const useAuthStore = create<AuthState>((set) => ({
     const res = await loginRequest({ email, password });
     tokenStore.set(res.access_token, res.refresh_token);
     set({ user: res.user, status: 'authenticated' });
+    connectSocket();
   },
 
   register: async (input) => {
     const res = await registerRequest(input);
     tokenStore.set(res.access_token, res.refresh_token);
     set({ user: res.user, status: 'authenticated' });
+    connectSocket();
   },
 
   logout: () => {
     tokenStore.clear();
+    disconnectSocket();
     set({ user: null, status: 'unauthenticated' });
   },
 }));

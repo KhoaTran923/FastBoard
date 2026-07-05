@@ -49,7 +49,44 @@ interface BoardState {
   updateTask: (taskId: string, patch: UpdateTaskInput) => Promise<void>;
   deleteTask: (taskId: string) => Promise<void>;
   moveTask: (taskId: string, toColumnId: string, toIndex: number) => Promise<void>;
+
+  // Apply realtime broadcasts from other users (guarded by updated_at)
+  applyRemoteTaskCreated: (task: Task) => void;
+  applyRemoteTaskUpserted: (task: Task) => void;
+  applyRemoteTaskDeleted: (taskId: string) => void;
   reset: () => void;
+}
+
+/**
+ * Last-write-wins conflict check: skip a remote event if we already hold a
+ * newer version of the task.
+ */
+function isStale(incoming: Task, current: Task | undefined): boolean {
+  if (!current?.updated_at || !incoming.updated_at) return false;
+  return new Date(incoming.updated_at).getTime() < new Date(current.updated_at).getTime();
+}
+
+/** Find a task in the active board (used by the applyRemote* actions). */
+function findTask(board: BoardDetail, taskId: string): Task | undefined {
+  for (const column of board.columns) {
+    const task = column.tasks.find((t) => t.id === taskId);
+    if (task) return task;
+  }
+  return undefined;
+}
+
+/** Remove `task` everywhere and re-insert it at its server-assigned position. */
+function placeTask(board: BoardDetail, task: Task): BoardDetail {
+  const columns = board.columns.map((column) => {
+    const without = column.tasks.filter((t) => t.id !== task.id);
+    if (column.id !== task.column_id) {
+      return without.length === column.tasks.length ? column : { ...column, tasks: without };
+    }
+    const index = Math.max(0, Math.min(task.position, without.length));
+    without.splice(index, 0, task);
+    return { ...column, tasks: without };
+  });
+  return { ...board, columns };
 }
 
 /** Load every column's tasks for a board and assemble the full detail view. */
@@ -321,10 +358,64 @@ export const useBoardStore = create<BoardState>((set, get) => ({
     set({ activeBoard: { ...activeBoard, columns } });
 
     try {
-      await moveTaskApi(workspaceId, activeBoard.id, fromColumnId, taskId, toColumnId, toIndex);
+      const confirmed = await moveTaskApi(
+        workspaceId,
+        activeBoard.id,
+        fromColumnId,
+        taskId,
+        toColumnId,
+        toIndex
+      );
+      // Merge the server-confirmed fields (mainly updated_at) without touching
+      // the optimistic placement, in case the user dragged the card again.
+      set((state) => {
+        if (!state.activeBoard) return {};
+        const columns = state.activeBoard.columns.map((c) => ({
+          ...c,
+          tasks: c.tasks.map((t) =>
+            t.id === taskId ? { ...confirmed, column_id: t.column_id, position: t.position } : t
+          ),
+        }));
+        return { activeBoard: { ...state.activeBoard, columns } };
+      });
     } catch (err) {
       set({ activeBoard: snapshot, error: apiErrorMessage(err) });
     }
+  },
+
+  // Realtime: changes made by other users, broadcast by the server
+
+  applyRemoteTaskCreated: (task) => {
+    set((state) => {
+      const board = state.activeBoard;
+      if (!board || findTask(board, task.id)) return {}; // duplicate event
+      return { activeBoard: placeTask(board, task) };
+    });
+  },
+
+  applyRemoteTaskUpserted: (task) => {
+    set((state) => {
+      const board = state.activeBoard;
+      if (!board) return {};
+      if (isStale(task, findTask(board, task.id))) return {}; // lost the conflict
+      return { activeBoard: placeTask(board, task) };
+    });
+  },
+
+  applyRemoteTaskDeleted: (taskId) => {
+    set((state) => {
+      const board = state.activeBoard;
+      if (!board || !findTask(board, taskId)) return {};
+      return {
+        activeBoard: {
+          ...board,
+          columns: board.columns.map((c) => ({
+            ...c,
+            tasks: c.tasks.filter((t) => t.id !== taskId),
+          })),
+        },
+      };
+    });
   },
 
   reset: () =>

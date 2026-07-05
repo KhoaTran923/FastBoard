@@ -3,8 +3,7 @@ packages:
   - 'server'
   - 'wasm'
 
-# Allow these dependencies to run their install/build scripts (pnpm v10+
-# blocks lifecycle scripts by default). esbuild needs it to fetch its
-# platform-specific binary used by Vite, tsx, and Vitest.
+# pnpm blocks lifecycle scripts by default; esbuild needs its install script
+# to fetch the platform binary used by Vite, tsx, and Vitest.
 allowBuilds:
   esbuild: true

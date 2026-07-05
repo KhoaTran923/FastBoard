@@ -1,9 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { instantiate } from '@assemblyscript/loader';
 
-// ── WASM loader ──────────────────────────────────────────────────────────────
-// Raw WebAssembly exports: strings are passed/returned as numeric pointers into
-// the module's linear memory.
+// Raw WebAssembly exports: strings cross the boundary as numeric pointers.
 interface RawExports extends Record<string, unknown> {
   kmpSearch(textPtr: number, patternPtr: number): number;
   contains(textPtr: number, patternPtr: number): number;
@@ -22,8 +20,8 @@ async function loadSearcher(): Promise<Searcher> {
   // search.wasm is served from client/public/wasm/ (built by the @repo/wasm package).
   const { exports } = await instantiate<RawExports>(fetch('/wasm/search.wasm'), {});
 
-  // Marshal JS strings into WASM memory, run the function, then release them.
-  // Pinning prevents the GC from moving/freeing the strings mid-call.
+  // Copy JS strings into WASM memory (pinned so the GC keeps them), run the
+  // function, then release them.
   const withStrings = (
     fn: (t: number, p: number) => number,
     text: string,
@@ -52,11 +50,9 @@ function getSearcher(): Promise<Searcher> {
   return searcherPromise;
 }
 
-// ── React hook ───────────────────────────────────────────────────────────────
 /**
  * Loads the WASM KMP search module and returns a case-insensitive `match`
- * function. Until the module finishes loading it transparently falls back to
- * JavaScript's `String.includes`, so search always works.
+ * function, falling back to String.includes until the module is ready.
  */
 export function useWasm() {
   const searcherRef = useRef<Searcher | null>(null);

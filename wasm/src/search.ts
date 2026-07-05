@@ -1,6 +1,5 @@
-// A shared failure-table buffer, reused across calls so a typical search does
-// not allocate (and therefore does not trigger GC). Search queries are short,
-// so they always fit; longer patterns fall back to a one-off allocation.
+// Shared failure-table buffer so typical (short) searches do not allocate;
+// longer patterns fall back to a one-off allocation.
 const LPS_CAPACITY: i32 = 1024;
 const sharedLps = new StaticArray<i32>(LPS_CAPACITY);
 

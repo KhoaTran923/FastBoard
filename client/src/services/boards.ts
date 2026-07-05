@@ -1,7 +1,7 @@
 import api from './http';
 import type { ApiResponse, Board, Column, Member, Project, Task, UserRole } from '../types';
 
-// ── Projects ──────────────────────────────────────────────────────────────────
+// Projects
 export async function getProjects(): Promise<Project[]> {
   const { data } = await api.get<ApiResponse<Project[]>>('/projects');
   return data.data ?? [];
@@ -12,7 +12,7 @@ export async function createProject(name: string, description?: string): Promise
   return data.data as Project;
 }
 
-// ── Boards & columns ──────────────────────────────────────────────────────────
+// Boards and columns
 /** Returns the project's boards, each already including its columns. */
 export async function getBoards(projectId: string): Promise<Board[]> {
   const { data } = await api.get<ApiResponse<Board[]>>(`/projects/${projectId}/boards`);
@@ -72,7 +72,7 @@ export async function deleteColumn(
   await api.delete(`/projects/${projectId}/boards/${boardId}/columns/${columnId}`);
 }
 
-// ── Members ───────────────────────────────────────────────────────────────────
+// Members
 export async function getMembers(projectId: string): Promise<Member[]> {
   const { data } = await api.get<ApiResponse<Member[]>>(`/projects/${projectId}/members`);
   return data.data ?? [];
@@ -86,7 +86,7 @@ export async function addMember(
   await api.post(`/projects/${projectId}/members`, { user_id: userId, role });
 }
 
-// ── Tasks ─────────────────────────────────────────────────────────────────────
+// Tasks
 export async function getColumnTasks(
   projectId: string,
   boardId: string,
@@ -127,6 +127,8 @@ export interface UpdateTaskInput {
   /** Full set of assignee user ids (replaces the current set). */
   assignee_ids?: string[];
   column_id?: string;
+  /** true stamps completed_at (feeds the analytics dashboard), false clears it. */
+  completed?: boolean;
 }
 
 export async function updateTask(

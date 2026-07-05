@@ -76,8 +76,12 @@ export const TaskRepository = {
     if (data.priority !== undefined) assign('priority', data.priority);
     if (data.due_date !== undefined) assign('due_date', data.due_date);
     if (data.position !== undefined) assign('position', data.position);
+    // completed toggles the completion timestamp
+    if (data.completed !== undefined)
+      sets.push(`completed_at = ${data.completed ? 'NOW()' : 'NULL'}`);
 
     if (sets.length > 0) {
+      sets.push('updated_at = NOW()');
       values.push(id);
       await query(`UPDATE tasks SET ${sets.join(', ')} WHERE id = $${values.length}`, values);
     }
@@ -97,13 +101,14 @@ export const TaskRepository = {
         [columnId, position, id]
       );
       const { rows } = await client.query<Task>(
-        `UPDATE tasks SET column_id = $1, position = $2
+        `UPDATE tasks SET column_id = $1, position = $2, updated_at = NOW()
          WHERE id = $3
-         RETURNING *`,
+         RETURNING id`,
         [columnId, position, id]
       );
       await client.query('COMMIT');
-      return rows[0] ?? null;
+      // Re-select via findById so the broadcast task includes assignees
+      return rows[0] ? this.findById(id) : null;
     } catch (err) {
       await client.query('ROLLBACK');
       throw err;

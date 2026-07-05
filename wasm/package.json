@@ -3,10 +3,13 @@
   "version": "1.0.0",
   "description": "FastBoard WebAssembly modules (AssemblyScript)",
   "scripts": {
-    "build": "asc --target release",
+    "build": "pnpm run build:search && pnpm run build:analytics",
+    "build:search": "asc --target release",
+    "build:analytics": "asc --config asconfig.analytics.json --target release",
     "build:debug": "asc --target debug",
     "bench": "node bench/benchmark.mjs",
-    "typecheck": "asc src/search.ts --noEmit"
+    "bench:analytics": "node bench/benchmark-analytics.mjs",
+    "typecheck": "asc src/search.ts --noEmit && asc src/analytics.ts --noEmit"
   },
   "keywords": [],
   "author": "",

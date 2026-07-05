@@ -30,6 +30,8 @@ export interface Task {
   position: number;
   completed_at?: string | null;
   created_at: string;
+  /** Bumped by the server on every mutation; used for last-write-wins sync. */
+  updated_at: string;
 }
 
 export interface Column {
@@ -79,4 +81,22 @@ export interface ApiResponse<T> {
   message?: string;
   error?: string;
   errors?: { field: string; message: string }[];
+}
+
+// Realtime event payloads broadcast by the socket server
+
+export interface TaskEventPayload {
+  task: Task;
+  /** User who made the change. */
+  actorId: string;
+}
+
+export interface TaskMovedPayload extends TaskEventPayload {
+  fromColumnId: string;
+}
+
+export interface TaskDeletedPayload {
+  taskId: string;
+  columnId: string;
+  actorId: string;
 }

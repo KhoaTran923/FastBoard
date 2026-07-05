@@ -7,10 +7,8 @@ import reactHooks from 'eslint-plugin-react-hooks';
 import prettier from 'eslint-config-prettier';
 import { defineConfig, globalIgnores } from 'eslint/config';
 
-// Absolute path to this monorepo root. typescript-eslint cannot auto-infer it
-// because several packages each carry their own tsconfig.json. (ESLint v10 looks
-// up the nearest eslint.config.js per file, so client/** uses client's own
-// config — see client/eslint.config.js — and this file governs server/ and wasm/.)
+// Monorepo root for typescript-eslint. client/** has its own eslint config;
+// this file governs server/ and wasm/.
 const tsconfigRootDir = dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig([

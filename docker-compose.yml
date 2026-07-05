@@ -1,8 +1,7 @@
-# Local development services for FastBoard.
-# Usage:
-#   docker compose up -d      # start PostgreSQL in the background
-#   docker compose down       # stop it (data is kept in the named volume)
-#   docker compose down -v    # stop and wipe the database
+# Local development services.
+#   docker compose up -d     start PostgreSQL
+#   docker compose down      stop (data is kept)
+#   docker compose down -v   stop and wipe the database
 services:
   postgres:
     image: postgres:16-alpine

@@ -22,6 +22,7 @@ export function TaskDetailModal({ task, onClose }: { task: Task; onClose: () => 
   const [assigneeIds, setAssigneeIds] = useState<string[]>(task.assignees ?? []);
   const [adding, setAdding] = useState(false);
   const [dueDate, setDueDate] = useState(task.due_date ? task.due_date.slice(0, 10) : '');
+  const [completed, setCompleted] = useState(Boolean(task.completed_at));
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
 
@@ -43,6 +44,8 @@ export function TaskDetailModal({ task, onClose }: { task: Task; onClose: () => 
         column_id: columnId,
         assignee_ids: assigneeIds,
         due_date: dueDate || null,
+        // Only send the flag when it changed so re-saves keep the original date
+        ...(completed !== Boolean(task.completed_at) ? { completed } : {}),
       });
       onClose();
     } catch (err) {
@@ -211,6 +214,23 @@ export function TaskDetailModal({ task, onClose }: { task: Task; onClose: () => 
             className={fieldClass}
           />
         </Field>
+
+        <label className="flex cursor-pointer items-center gap-3 rounded-md border border-medium-grey/20 px-4 py-2.5">
+          <input
+            type="checkbox"
+            checked={completed}
+            onChange={(e) => setCompleted(e.target.checked)}
+            className="h-4 w-4 accent-purple"
+          />
+          <span className="text-[13px] font-bold text-black dark:text-white">
+            {completed ? 'Completed' : 'Mark as complete'}
+          </span>
+          {task.completed_at && completed && (
+            <span className="ml-auto text-xs text-medium-grey">
+              since {new Date(task.completed_at).toLocaleDateString()}
+            </span>
+          )}
+        </label>
 
         <div className="flex gap-3 pt-1">
           <Button type="submit" fullWidth disabled={busy}>

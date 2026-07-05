@@ -3,7 +3,7 @@ import type { ApiResponse } from '../types';
 
 export const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:3001/api';
 
-// ── Token storage ───────────────────────────────────────────────────────────
+// Token storage
 const ACCESS_KEY = 'fb_access_token';
 const REFRESH_KEY = 'fb_refresh_token';
 
@@ -24,13 +24,18 @@ export const tokenStore = {
   },
 };
 
-// ── Axios instance ────────────────────────────────────────────────────────────
+// Realtime socket id, set on connect and sent with REST requests so the
+// server skips echoing our own changes (kept here to avoid a circular import).
+export const socketMeta = { id: null as string | null };
+
+// Axios instance
 const api = axios.create({ baseURL: API_URL });
 
-// Attach the access token to every request.
+// Attach the access token (and our realtime socket id) to every request.
 api.interceptors.request.use((config) => {
   const token = tokenStore.access;
   if (token) config.headers.Authorization = `Bearer ${token}`;
+  if (socketMeta.id) config.headers['X-Socket-Id'] = socketMeta.id;
   return config;
 });
 

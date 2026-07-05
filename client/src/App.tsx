@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { AppLayout } from './layouts/AppLayout';
+import { Analytics } from './pages/Analytics';
 import { BoardView } from './pages/BoardView';
 import { LoginPage } from './pages/LoginPage';
 import { RegisterPage } from './pages/RegisterPage';
@@ -20,6 +21,7 @@ export default function App() {
         <Route path="/register" element={<RegisterPage />} />
         <Route element={<AppLayout />}>
           <Route path="/" element={<BoardView />} />
+          <Route path="/analytics" element={<Analytics />} />
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

@@ -1,4 +1,4 @@
-// ===== Shared TypeScript interfaces =====
+// Shared TypeScript interfaces
 
 export interface JwtPayload {
   userId: string;
@@ -11,10 +11,8 @@ export interface AuthRequest extends Express.Request {
   user?: JwtPayload;
 }
 
-// Re-export express Request with user attached.
-// Pin the route-params generic to flat string values: Express 5's default
-// ParamsDictionary types values as `string | string[]`, which breaks passing
-// req.params.* into string-typed service functions.
+// Express Request with user attached. Route params are pinned to flat strings
+// because Express 5 types them as string | string[] by default.
 import type { Request } from 'express';
 export interface AuthenticatedRequest extends Request<Record<string, string>> {
   user: JwtPayload;
@@ -83,6 +81,8 @@ export interface Task {
   position: number;
   completed_at?: Date;
   created_at: Date;
+  /** Bumped on every mutation; used for last-write-wins sync. */
+  updated_at: Date;
 }
 
 export interface ActivityLog {

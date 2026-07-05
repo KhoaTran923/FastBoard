@@ -2,11 +2,9 @@ import type { RequestHandler, Response } from 'express';
 import type { AuthenticatedRequest } from '../types/index.js';
 
 /**
- * Wraps an authenticated async controller method so that:
- *  - `req` is typed as AuthenticatedRequest — `req.user` is guaranteed because
- *    the `authenticate` middleware always runs before these routes, and
- *  - any rejected promise is forwarded to Express's global error handler via
- *    `next()` instead of crashing the request.
+ * Wraps an authenticated async controller: types `req` as AuthenticatedRequest
+ * (the authenticate middleware runs first, so req.user exists) and forwards
+ * rejections to the global error handler.
  */
 export const asAuth =
   (fn: (req: AuthenticatedRequest, res: Response) => Promise<unknown>): RequestHandler =>

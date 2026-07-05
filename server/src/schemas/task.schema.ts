@@ -17,6 +17,8 @@ export const updateTaskSchema = z.object({
   assignee_ids: z.array(z.string().uuid()).optional(),
   position: z.number().int().min(0).optional(),
   column_id: z.string().uuid().optional(),
+  /** true sets completed_at to now, false clears it. */
+  completed: z.boolean().optional(),
 });
 
 export const moveTaskSchema = z.object({

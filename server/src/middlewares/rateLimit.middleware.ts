@@ -1,7 +1,6 @@
 import rateLimit from 'express-rate-limit';
 
-// Rate limiting is skipped outside production so local development and testing
-// (hot reloads, repeated logins) are never throttled. It stays active in prod.
+// Skipped outside production so local development is never throttled
 const skipInDev = () => process.env.NODE_ENV !== 'production';
 
 /** Generous limiter applied to the whole API. */
@@ -14,9 +13,8 @@ export const apiLimiter = rateLimit({
 });
 
 /**
- * Strict limiter for the credential endpoints (login/register) to slow down
- * brute-force guessing. Deliberately NOT applied to /me or /refresh, which run
- * during normal app usage (e.g. on every page load) and must not be throttled.
+ * Strict limiter for login/register to slow brute-force guessing; not applied
+ * to /me or /refresh, which run during normal app usage.
  */
 export const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
