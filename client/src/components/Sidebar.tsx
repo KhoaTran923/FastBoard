@@ -2,8 +2,9 @@ import { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Logo } from './common/Logo';
 import { ThemeToggle } from './ThemeToggle';
-import { AddMemberModal } from './modals/AddMemberModal';
+import { ManageTeamModal } from './modals/ManageTeamModal';
 import { TextPromptModal } from './modals/TextPromptModal';
+import { useMyRole } from '../hooks/useMyRole';
 import { useAuthStore } from '../stores/authStore';
 import { useBoardStore } from '../stores/boardStore';
 import type { Board } from '../types';
@@ -22,6 +23,25 @@ function ChartIcon({ className = '' }: { className?: string }) {
       <rect x="3.5" y="8" width="2.5" height="5" rx="0.75" />
       <rect x="7.5" y="4" width="2.5" height="9" rx="0.75" />
       <rect x="11.5" y="6" width="2.5" height="7" rx="0.75" />
+    </svg>
+  );
+}
+
+function ClockIcon({ className = '' }: { className?: string }) {
+  return (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      className={className}
+      aria-hidden
+    >
+      <circle cx="12" cy="12" r="9" />
+      <path d="M12 7v5l3 3" />
     </svg>
   );
 }
@@ -56,10 +76,15 @@ export function Sidebar({ onCreateBoard, onHide }: SidebarProps) {
 
   const [menuFor, setMenuFor] = useState<string | null>(null);
   const [renameTarget, setRenameTarget] = useState<Board | null>(null);
-  const [addMemberOpen, setAddMemberOpen] = useState(false);
+  const [teamOpen, setTeamOpen] = useState(false);
 
   const navigate = useNavigate();
-  const onAnalytics = useLocation().pathname === '/analytics';
+  const { pathname } = useLocation();
+  const onAnalytics = pathname === '/analytics';
+  const onActivity = pathname === '/activity';
+  const role = useMyRole();
+  const canEdit = role !== 'viewer';
+  const isAdmin = role === 'admin';
 
   const authed = status === 'authenticated';
 
@@ -76,7 +101,7 @@ export function Sidebar({ onCreateBoard, onHide }: SidebarProps) {
 
         <nav className="pr-4">
           {boards.map((board) => {
-            const isActive = board.id === activeBoardId && !onAnalytics;
+            const isActive = board.id === activeBoardId && !onAnalytics && !onActivity;
             return (
               <div
                 key={board.id}
@@ -89,7 +114,7 @@ export function Sidebar({ onCreateBoard, onHide }: SidebarProps) {
                 <button
                   onClick={() => {
                     void selectBoard(board.id);
-                    if (onAnalytics) navigate('/');
+                    if (onAnalytics || onActivity) navigate('/');
                   }}
                   className="flex min-w-0 flex-1 items-center gap-3 py-3.5 pl-6 text-left text-[15px] font-bold"
                 >
@@ -119,38 +144,44 @@ export function Sidebar({ onCreateBoard, onHide }: SidebarProps) {
                     <>
                       <div className="fixed inset-0 z-10" onClick={() => setMenuFor(null)} />
                       <div className="absolute right-0 top-8 z-20 w-40 rounded-lg bg-white p-1.5 shadow-xl dark:bg-very-dark">
+                        {isAdmin && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setMenuFor(null);
+                              setRenameTarget(board);
+                            }}
+                            className="block w-full rounded px-3 py-1.5 text-left text-sm font-medium text-black hover:bg-purple/10 dark:text-white"
+                          >
+                            Rename
+                          </button>
+                        )}
                         <button
                           type="button"
                           onClick={() => {
                             setMenuFor(null);
-                            setRenameTarget(board);
+                            setTeamOpen(true);
                           }}
                           className="block w-full rounded px-3 py-1.5 text-left text-sm font-medium text-black hover:bg-purple/10 dark:text-white"
                         >
-                          Rename
+                          Team
                         </button>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setMenuFor(null);
-                            setAddMemberOpen(true);
-                          }}
-                          className="block w-full rounded px-3 py-1.5 text-left text-sm font-medium text-black hover:bg-purple/10 dark:text-white"
-                        >
-                          Add assignee
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setMenuFor(null);
-                            if (window.confirm(`Delete board “${board.name}” and all its tasks?`)) {
-                              void deleteBoard(board.id);
-                            }
-                          }}
-                          className="block w-full rounded px-3 py-1.5 text-left text-sm font-medium text-red hover:bg-red/10"
-                        >
-                          Delete
-                        </button>
+                        {isAdmin && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setMenuFor(null);
+                              if (
+                                window.confirm(`Delete board “${board.name}” and all its tasks?`)
+                              ) {
+                                void deleteBoard(board.id);
+                              }
+                            }}
+                            className="block w-full rounded px-3 py-1.5 text-left text-sm font-medium text-red hover:bg-red/10"
+                          >
+                            Delete
+                          </button>
+                        )}
                       </div>
                     </>
                   )}
@@ -159,13 +190,15 @@ export function Sidebar({ onCreateBoard, onHide }: SidebarProps) {
             );
           })}
 
-          <button
-            onClick={onCreateBoard}
-            className="flex w-full items-center gap-3 rounded-r-full py-3.5 pl-6 text-left text-[15px] font-bold text-purple hover:bg-purple/10 dark:hover:bg-white"
-          >
-            <BoardIcon />
-            <span>+ Create New Board</span>
-          </button>
+          {(!authed || canEdit) && (
+            <button
+              onClick={onCreateBoard}
+              className="flex w-full items-center gap-3 rounded-r-full py-3.5 pl-6 text-left text-[15px] font-bold text-purple hover:bg-purple/10 dark:hover:bg-white"
+            >
+              <BoardIcon />
+              <span>+ Create New Board</span>
+            </button>
+          )}
 
           {authed && (
             <button
@@ -178,6 +211,20 @@ export function Sidebar({ onCreateBoard, onHide }: SidebarProps) {
             >
               <ChartIcon className="shrink-0" />
               <span>Analytics</span>
+            </button>
+          )}
+
+          {authed && (
+            <button
+              onClick={() => navigate('/activity')}
+              className={`flex w-full items-center gap-3 rounded-r-full py-3.5 pl-6 text-left text-[15px] font-bold transition-colors ${
+                onActivity
+                  ? 'bg-purple text-white'
+                  : 'text-medium-grey hover:bg-purple/10 hover:text-purple dark:hover:bg-white'
+              }`}
+            >
+              <ClockIcon className="shrink-0" />
+              <span>Activity</span>
             </button>
           )}
         </nav>
@@ -206,7 +253,7 @@ export function Sidebar({ onCreateBoard, onHide }: SidebarProps) {
           onSubmit={(name) => renameBoard(renameTarget.id, name)}
         />
       )}
-      {addMemberOpen && <AddMemberModal onClose={() => setAddMemberOpen(false)} />}
+      {teamOpen && <ManageTeamModal onClose={() => setTeamOpen(false)} />}
     </aside>
   );
 }

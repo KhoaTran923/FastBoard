@@ -5,6 +5,8 @@ import cors from 'cors';
 
 import { apiLimiter } from './middlewares/rateLimit.middleware.js';
 import authRoutes from './routes/auth.routes.js';
+import inviteRoutes from './routes/invite.routes.js';
+import notificationRoutes from './routes/notification.routes.js';
 import projectRoutes from './routes/project.routes.js';
 import userRoutes from './routes/user.routes.js';
 import { initSocket } from './socket/index.js';
@@ -33,6 +35,8 @@ app.get('/api/health', (_req, res) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/projects', projectRoutes);
+app.use('/api/invites', inviteRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 // Global error handler
 app.use((err: Error, _req: express.Request, res: express.Response, _next: express.NextFunction) => {

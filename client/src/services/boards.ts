@@ -1,5 +1,14 @@
 import api from './http';
-import type { ApiResponse, Board, Column, Member, Project, Task, UserRole } from '../types';
+import type {
+  ActivityEntry,
+  ApiResponse,
+  Board,
+  Column,
+  Member,
+  Project,
+  Task,
+  UserRole,
+} from '../types';
 
 // Projects
 export async function getProjects(): Promise<Project[]> {
@@ -84,6 +93,30 @@ export async function addMember(
   role: UserRole = 'member'
 ): Promise<void> {
   await api.post(`/projects/${projectId}/members`, { user_id: userId, role });
+}
+
+export async function updateMemberRole(
+  projectId: string,
+  userId: string,
+  role: UserRole
+): Promise<void> {
+  await api.patch(`/projects/${projectId}/members/${userId}`, { role });
+}
+
+export async function removeMember(projectId: string, userId: string): Promise<void> {
+  await api.delete(`/projects/${projectId}/members/${userId}`);
+}
+
+// Activity history
+export async function getActivity(
+  projectId: string,
+  limit = 50,
+  before?: string
+): Promise<ActivityEntry[]> {
+  const { data } = await api.get<ApiResponse<ActivityEntry[]>>(`/projects/${projectId}/activity`, {
+    params: { limit, before },
+  });
+  return data.data ?? [];
 }
 
 // Tasks

@@ -69,6 +69,59 @@ export interface Member {
   joined_at: string;
 }
 
+/** One project history entry, as returned by GET /projects/:id/activity. */
+export interface ActivityEntry {
+  id: string;
+  project_id: string;
+  user_id: string | null;
+  action: string;
+  entity_type: string;
+  entity_id: string;
+  metadata?: Record<string, unknown> | null;
+  created_at: string;
+  user_name: string | null;
+  user_email: string | null;
+}
+
+export type NotificationType =
+  | 'member_added'
+  | 'role_changed'
+  | 'task_assigned'
+  | 'invite_accepted';
+
+/** An in-app notification, as returned by GET /notifications. */
+export interface AppNotification {
+  id: string;
+  user_id: string;
+  actor_id: string | null;
+  project_id: string | null;
+  type: NotificationType;
+  metadata?: Record<string, unknown> | null;
+  read_at: string | null;
+  created_at: string;
+  actor_name?: string | null;
+  project_name?: string | null;
+}
+
+/** A shareable invite link, as returned by POST /projects/:id/invites. */
+export interface ProjectInvite {
+  token: string;
+  project_id: string;
+  role: UserRole;
+  expires_at: string;
+  created_at: string;
+}
+
+/** What the invite page shows before the user accepts. */
+export interface InvitePreview {
+  project_id: string;
+  project_name: string;
+  role: UserRole;
+  inviter_name: string | null;
+  expired: boolean;
+  already_member: boolean;
+}
+
 export interface AuthResponse {
   user: User;
   access_token: string;

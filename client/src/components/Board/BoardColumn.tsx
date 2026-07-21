@@ -12,6 +12,8 @@ interface BoardColumnProps {
   index: number;
   /** When true, tasks are draggable/sortable; when false (search), read-only. */
   sortable: boolean;
+  /** When false (viewer role), the rename/delete menu is hidden. */
+  canEdit: boolean;
   onTaskClick: (task: Task) => void;
   onRename: (name: string) => void;
   onDelete: () => void;
@@ -21,6 +23,7 @@ export function BoardColumn({
   column,
   index,
   sortable,
+  canEdit,
   onTaskClick,
   onRename,
   onDelete,
@@ -64,7 +67,7 @@ export function BoardColumn({
             {column.name} ({column.tasks.length})
           </h3>
         )}
-        <div className="relative">
+        <div className={canEdit ? 'relative' : 'hidden'}>
           <button
             type="button"
             onClick={() => setMenuOpen((o) => !o)}

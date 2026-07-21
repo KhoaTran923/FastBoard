@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { fetchMe, loginRequest, registerRequest, type RegisterInput } from '../services/auth';
-import { tokenStore } from '../services/http';
+import { isNetworkError, tokenStore } from '../services/http';
 import { connectSocket, disconnectSocket } from '../services/socket';
 import type { User } from '../types';
 
@@ -11,6 +11,8 @@ interface AuthState {
   status: AuthStatus;
   /** Restore a session from a stored token on app start. */
   loadSession: () => Promise<void>;
+  /** Fill in the profile after an offline start (no status flips). */
+  refreshUser: () => Promise<void>;
   login: (email: string, password: string) => Promise<void>;
   register: (input: RegisterInput) => Promise<void>;
   logout: () => void;
@@ -30,9 +32,25 @@ export const useAuthStore = create<AuthState>((set) => ({
       const user = await fetchMe();
       set({ user, status: 'authenticated' });
       connectSocket();
+    } catch (err) {
+      if (isNetworkError(err)) {
+        // Offline: trust the stored token so the snapshot board can show;
+        // the socket reconnects (and resyncs) once the network returns
+        set({ user: null, status: 'authenticated' });
+        connectSocket();
+      } else {
+        tokenStore.clear();
+        set({ user: null, status: 'unauthenticated' });
+      }
+    }
+  },
+
+  refreshUser: async () => {
+    try {
+      const user = await fetchMe();
+      set({ user });
     } catch {
-      tokenStore.clear();
-      set({ user: null, status: 'unauthenticated' });
+      // Still offline or token expired; loadSession handles the next start
     }
   },
 

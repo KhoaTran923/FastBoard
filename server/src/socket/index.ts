@@ -18,6 +18,7 @@ interface BoardSocket extends Socket {
 let io: Server | null = null;
 
 const boardRoom = (boardId: string) => `board:${boardId}`;
+const userRoom = (userId: string) => `user:${userId}`;
 
 /** True if the user owns the board's project or is a member of it. */
 async function canAccessBoard(boardId: string, userId: string): Promise<boolean> {
@@ -57,6 +58,9 @@ export function initSocket(httpServer: HttpServer): Server {
   io.on('connection', (rawSocket) => {
     const socket = rawSocket as BoardSocket;
 
+    // Personal room: notifications are pushed here regardless of open board
+    void socket.join(userRoom(socket.data.user.userId));
+
     socket.on('board:join', async (boardId: unknown, ack?: (ok: boolean) => void) => {
       if (typeof boardId !== 'string') {
         ack?.(false);
@@ -95,4 +99,10 @@ export function emitBoardEvent(
     ? io.to(boardRoom(boardId)).except(exceptSocketId)
     : io.to(boardRoom(boardId));
   room.emit(event, payload);
+}
+
+/** Push an event to every connected session of one user. */
+export function emitToUser(userId: string, event: string, payload: unknown): void {
+  if (!io) return; // unit tests run services without a socket server
+  io.to(userRoom(userId)).emit(event, payload);
 }

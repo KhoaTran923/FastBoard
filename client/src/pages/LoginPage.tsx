@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react';
-import { Link, Navigate, useNavigate } from 'react-router-dom';
+import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { AuthCard, OrDivider } from '../components/common/AuthCard';
 import { GoogleButton } from '../components/common/GoogleButton';
 import { PasswordInput } from '../components/common/PasswordInput';
@@ -10,13 +10,15 @@ import { useAuthStore } from '../stores/authStore';
 export function LoginPage() {
   const { login, status } = useAuthStore();
   const navigate = useNavigate();
+  // Where to land after login (e.g. an invite link that required sign-in)
+  const from = (useLocation().state as { from?: string } | null)?.from ?? '/';
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
-  if (status === 'authenticated') return <Navigate to="/" replace />;
+  if (status === 'authenticated') return <Navigate to={from} replace />;
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -24,7 +26,7 @@ export function LoginPage() {
     setSubmitting(true);
     try {
       await login(email, password);
-      navigate('/', { replace: true });
+      navigate(from, { replace: true });
     } catch (err) {
       setError(apiErrorMessage(err));
     } finally {
@@ -63,7 +65,7 @@ export function LoginPage() {
 
         <p className="text-sm text-black dark:text-white">
           Don&apos;t have an account with us yet?{' '}
-          <Link to="/register" className="font-bold text-purple hover:underline">
+          <Link to="/register" state={{ from }} className="font-bold text-purple hover:underline">
             Create one now
           </Link>
         </p>

@@ -1,4 +1,4 @@
-import { useEffect, type ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
 import { KanbanBoard } from '../components/Board/KanbanBoard';
 import { Button, Spinner } from '../components/common/ui';
@@ -20,15 +20,10 @@ export function BoardView() {
   const boards = useBoardStore((s) => s.boards);
   const activeBoard = useBoardStore((s) => s.activeBoard);
   const boardLoading = useBoardStore((s) => s.boardLoading);
+  const offline = useBoardStore((s) => s.offline);
   const init = useBoardStore((s) => s.init);
   const { openCreateBoard, openNewColumn } = useOutletContext<BoardOutletContext>();
   const navigate = useNavigate();
-
-  useEffect(() => {
-    if (authStatus === 'authenticated' && status === 'idle') {
-      void init();
-    }
-  }, [authStatus, status, init]);
 
   // Not signed in
   if (authStatus !== 'authenticated') {
@@ -86,5 +81,17 @@ export function BoardView() {
     );
   }
 
-  return <KanbanBoard board={activeBoard} onNewColumn={openNewColumn} />;
+  return (
+    <div className="flex h-full flex-col">
+      {offline && (
+        <div className="shrink-0 bg-[#E5A449]/15 px-6 py-2 text-center text-xs font-bold text-[#a06a1b]">
+          Offline — showing your last saved board. Changes are disabled until the connection
+          returns.
+        </div>
+      )}
+      <div className="min-h-0 flex-1">
+        <KanbanBoard board={activeBoard} onNewColumn={openNewColumn} readOnly={offline} />
+      </div>
+    </div>
+  );
 }

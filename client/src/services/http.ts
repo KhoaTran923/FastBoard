@@ -86,6 +86,11 @@ api.interceptors.response.use(
   }
 );
 
+/** True when the request never reached the server (offline, DNS, refused). */
+export function isNetworkError(err: unknown): boolean {
+  return axios.isAxiosError(err) && (err.code === 'ERR_NETWORK' || !err.response);
+}
+
 /** Turn any thrown API error into a user-friendly message. */
 export function apiErrorMessage(err: unknown): string {
   if (axios.isAxiosError(err)) {

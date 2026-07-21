@@ -1,0 +1,20 @@
+{
+  "entries": ["src/compression.ts"],
+  "options": {
+    "exportRuntime": true
+  },
+  "targets": {
+    "release": {
+      "outFile": "../client/public/wasm/compression.wasm",
+      "optimizeLevel": 3,
+      "shrinkLevel": 1,
+      "converge": false,
+      "noAssert": true
+    },
+    "debug": {
+      "outFile": "build/compression.wasm",
+      "textFile": "build/compression.wat",
+      "debug": true
+    }
+  }
+}

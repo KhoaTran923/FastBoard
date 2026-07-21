@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react';
-import { Link, Navigate, useNavigate } from 'react-router-dom';
+import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { AuthCard, OrDivider } from '../components/common/AuthCard';
 import { GoogleButton } from '../components/common/GoogleButton';
 import { PasswordInput } from '../components/common/PasswordInput';
@@ -10,6 +10,8 @@ import { useAuthStore } from '../stores/authStore';
 export function RegisterPage() {
   const { register, status } = useAuthStore();
   const navigate = useNavigate();
+  // Where to land after signup (e.g. an invite link that required an account)
+  const from = (useLocation().state as { from?: string } | null)?.from ?? '/';
 
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
@@ -18,7 +20,7 @@ export function RegisterPage() {
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
-  if (status === 'authenticated') return <Navigate to="/" replace />;
+  if (status === 'authenticated') return <Navigate to={from} replace />;
 
   function validate(): string | null {
     if (fullName.trim().length < 2) return 'Please enter your name.';
@@ -38,7 +40,7 @@ export function RegisterPage() {
     setSubmitting(true);
     try {
       await register({ full_name: fullName, email, password });
-      navigate('/', { replace: true });
+      navigate(from, { replace: true });
     } catch (err) {
       setError(apiErrorMessage(err));
     } finally {
@@ -97,7 +99,7 @@ export function RegisterPage() {
 
         <p className="text-sm text-black dark:text-white">
           Already have an account with us?{' '}
-          <Link to="/login" className="font-bold text-purple hover:underline">
+          <Link to="/login" state={{ from }} className="font-bold text-purple hover:underline">
             Login
           </Link>
         </p>

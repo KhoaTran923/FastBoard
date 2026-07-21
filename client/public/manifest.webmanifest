@@ -1,0 +1,30 @@
+{
+  "name": "FastBoard — Kanban",
+  "short_name": "FastBoard",
+  "description": "High-performance Kanban task management with WebAssembly",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#20212c",
+  "theme_color": "#635fc7",
+  "icons": [
+    {
+      "src": "/pwa-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/pwa-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/pwa-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

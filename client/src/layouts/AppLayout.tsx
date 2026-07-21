@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Outlet, useNavigate } from 'react-router-dom';
 import { Header } from '../components/Header';
 import { Sidebar } from '../components/Sidebar';
@@ -6,6 +6,7 @@ import { AddTaskModal } from '../components/modals/AddTaskModal';
 import { BoardFormModal } from '../components/modals/BoardFormModal';
 import { TextPromptModal } from '../components/modals/TextPromptModal';
 import { useBoardSync } from '../hooks/useBoardSync';
+import { useNotifications } from '../hooks/useNotifications';
 import { useAuthStore } from '../stores/authStore';
 import { useBoardStore } from '../stores/boardStore';
 
@@ -23,9 +24,20 @@ export function AppLayout() {
   const status = useAuthStore((s) => s.status);
   const navigate = useNavigate();
   const { activeBoard, createBoard, addColumn, addTask } = useBoardStore();
+  const boardStatus = useBoardStore((s) => s.status);
+
+  // Load the workspace here (not in a page) so deep links to /activity or
+  // /analytics work without visiting the board first
+  useEffect(() => {
+    if (status === 'authenticated' && boardStatus === 'idle') {
+      void useBoardStore.getState().init();
+    }
+  }, [status, boardStatus]);
 
   // Mounted at the layout so every page receives realtime board events
   useBoardSync(useBoardStore((s) => s.activeBoardId));
+  // Loads the notification list and applies realtime pushes
+  useNotifications();
 
   const authed = status === 'authenticated';
 

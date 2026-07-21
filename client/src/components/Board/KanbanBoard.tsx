@@ -12,6 +12,7 @@ import {
 import { BoardColumn } from './BoardColumn';
 import { TaskCard } from './TaskCard';
 import { TaskDetailModal } from '../modals/TaskDetailModal';
+import { useMyRole } from '../../hooks/useMyRole';
 import { useWasm } from '../../hooks/useWasm';
 import { useBoardStore } from '../../stores/boardStore';
 import { useSearchStore } from '../../stores/searchStore';
@@ -20,6 +21,8 @@ import type { BoardDetail, Task } from '../../types';
 interface KanbanBoardProps {
   board: BoardDetail;
   onNewColumn: () => void;
+  /** Force read-only regardless of role (offline snapshot mode). */
+  readOnly?: boolean;
 }
 
 function NewColumnButton({ onClick }: { onClick: () => void }) {
@@ -33,12 +36,15 @@ function NewColumnButton({ onClick }: { onClick: () => void }) {
   );
 }
 
-export function KanbanBoard({ board, onNewColumn }: KanbanBoardProps) {
+export function KanbanBoard({ board, onNewColumn, readOnly = false }: KanbanBoardProps) {
   const query = useSearchStore((s) => s.query);
   const { match } = useWasm();
   const moveTask = useBoardStore((s) => s.moveTask);
   const renameColumn = useBoardStore((s) => s.renameColumn);
   const deleteColumn = useBoardStore((s) => s.deleteColumn);
+  const role = useMyRole();
+  // Viewers and offline snapshots get a read-only board: no dragging, no edits
+  const canEdit = !readOnly && role !== 'viewer';
 
   const [activeTask, setActiveTask] = useState<Task | null>(null);
   const [detailTask, setDetailTask] = useState<Task | null>(null);
@@ -76,7 +82,7 @@ export function KanbanBoard({ board, onNewColumn }: KanbanBoardProps) {
   }
 
   const detailModal = detailTask && (
-    <TaskDetailModal task={detailTask} onClose={() => setDetailTask(null)} />
+    <TaskDetailModal task={detailTask} readOnly={!canEdit} onClose={() => setDetailTask(null)} />
   );
 
   // While searching: read-only, filtered (WASM) view — dragging is disabled.
@@ -89,9 +95,10 @@ export function KanbanBoard({ board, onNewColumn }: KanbanBoardProps) {
     [columns, query, match]
   );
 
-  if (searching) {
-    const total = filtered.reduce((sum, c) => sum + c.tasks.length, 0);
-    if (total === 0) {
+  if (searching || !canEdit) {
+    const shown = searching ? filtered : columns;
+    const total = shown.reduce((sum, c) => sum + c.tasks.length, 0);
+    if (searching && total === 0) {
       return (
         <div className="flex h-full flex-col items-center justify-center gap-2 px-6 text-center">
           <p className="text-lg font-bold text-medium-grey">No tasks match “{query}”.</p>
@@ -101,18 +108,19 @@ export function KanbanBoard({ board, onNewColumn }: KanbanBoardProps) {
     }
     return (
       <div className="flex h-full gap-6 overflow-auto p-6">
-        {filtered.map((c, i) => (
+        {shown.map((c, i) => (
           <BoardColumn
             key={c.id}
             column={c}
             index={i}
             sortable={false}
+            canEdit={canEdit}
             onTaskClick={setDetailTask}
             onRename={(name) => void renameColumn(c.id, name)}
             onDelete={() => void deleteColumn(c.id)}
           />
         ))}
-        <NewColumnButton onClick={onNewColumn} />
+        {canEdit && <NewColumnButton onClick={onNewColumn} />}
         {detailModal}
       </div>
     );
@@ -132,6 +140,7 @@ export function KanbanBoard({ board, onNewColumn }: KanbanBoardProps) {
             column={c}
             index={i}
             sortable
+            canEdit
             onTaskClick={setDetailTask}
             onRename={(name) => void renameColumn(c.id, name)}
             onDelete={() => void deleteColumn(c.id)}

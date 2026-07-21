@@ -13,14 +13,17 @@ import {
   getMembers,
   getProjects,
   moveTask as moveTaskApi,
+  removeMember as removeMemberApi,
   renameBoard as renameBoardApi,
   renameColumn as renameColumnApi,
+  updateMemberRole as updateMemberRoleApi,
   updateTask as updateTaskApi,
   type CreateTaskInput,
   type UpdateTaskInput,
 } from '../services/boards';
-import { apiErrorMessage } from '../services/http';
-import type { Board, BoardDetail, Member, Task } from '../types';
+import { apiErrorMessage, isNetworkError } from '../services/http';
+import { clearSnapshot, loadSnapshot, saveSnapshot } from '../lib/offlineSnapshot';
+import type { Board, BoardDetail, Member, Task, UserRole } from '../types';
 
 const DEFAULT_WORKSPACE = 'My Workspace';
 
@@ -35,13 +38,21 @@ interface BoardState {
   status: BoardStatus;
   boardLoading: boolean;
   error: string | null;
+  /** True when showing the compressed localStorage snapshot (no network). */
+  offline: boolean;
 
   init: () => Promise<void>;
+  /** Reload everything from the server after connectivity returns. */
+  resync: () => Promise<void>;
+  /** Load a specific project as the active workspace (e.g. after an invite). */
+  switchWorkspace: (projectId: string) => Promise<void>;
   selectBoard: (boardId: string) => Promise<void>;
   createBoard: (name: string, columnNames?: string[]) => Promise<void>;
   renameBoard: (boardId: string, name: string) => Promise<void>;
   deleteBoard: (boardId: string) => Promise<void>;
   addMember: (userId: string) => Promise<void>;
+  updateMemberRole: (userId: string, role: UserRole) => Promise<void>;
+  removeMember: (userId: string) => Promise<void>;
   addColumn: (name: string) => Promise<void>;
   renameColumn: (columnId: string, name: string) => Promise<void>;
   deleteColumn: (columnId: string) => Promise<void>;
@@ -113,6 +124,7 @@ export const useBoardStore = create<BoardState>((set, get) => ({
   status: 'idle',
   boardLoading: false,
   error: null,
+  offline: false,
 
   init: async () => {
     // Guard against React StrictMode's double-invoke and concurrent calls.
@@ -125,7 +137,42 @@ export const useBoardStore = create<BoardState>((set, get) => ({
         getBoards(workspace.id),
         getMembers(workspace.id),
       ]);
-      set({ workspaceId: workspace.id, boards, members, status: 'ready' });
+      set({ workspaceId: workspace.id, boards, members, status: 'ready', offline: false });
+      if (boards.length > 0) {
+        await get().selectBoard(boards[0].id);
+      }
+    } catch (err) {
+      // No network: fall back to the compressed snapshot from localStorage
+      if (isNetworkError(err)) {
+        const snapshot = await loadSnapshot();
+        if (snapshot) {
+          set({
+            workspaceId: snapshot.workspaceId,
+            boards: snapshot.boards,
+            members: snapshot.members,
+            activeBoardId: snapshot.activeBoardId,
+            activeBoard: snapshot.activeBoard,
+            status: 'ready',
+            offline: true,
+          });
+          return;
+        }
+      }
+      set({ status: 'error', error: apiErrorMessage(err) });
+    }
+  },
+
+  resync: async () => {
+    if (!get().offline) return;
+    set({ status: 'idle', offline: false });
+    await get().init();
+  },
+
+  switchWorkspace: async (projectId) => {
+    set({ status: 'loading', error: null, activeBoardId: null, activeBoard: null });
+    try {
+      const [boards, members] = await Promise.all([getBoards(projectId), getMembers(projectId)]);
+      set({ workspaceId: projectId, boards, members, status: 'ready' });
       if (boards.length > 0) {
         await get().selectBoard(boards[0].id);
       }
@@ -135,7 +182,9 @@ export const useBoardStore = create<BoardState>((set, get) => ({
   },
 
   selectBoard: async (boardId) => {
-    const { workspaceId, boards } = get();
+    const { workspaceId, boards, offline } = get();
+    // Offline: only the snapshotted board is available, ignore switches
+    if (offline) return;
     const board = boards.find((b) => b.id === boardId);
     if (!workspaceId || !board) return;
     set({ activeBoardId: boardId, boardLoading: true });
@@ -202,6 +251,32 @@ export const useBoardStore = create<BoardState>((set, get) => ({
     await addMemberApi(workspaceId, userId);
     const members = await getMembers(workspaceId);
     set({ members });
+  },
+
+  updateMemberRole: async (userId, role) => {
+    const { workspaceId, members } = get();
+    if (!workspaceId) return;
+    const snapshot = members;
+    set({ members: members.map((m) => (m.id === userId ? { ...m, role } : m)) });
+    try {
+      await updateMemberRoleApi(workspaceId, userId, role);
+    } catch (err) {
+      set({ members: snapshot, error: apiErrorMessage(err) });
+      throw err;
+    }
+  },
+
+  removeMember: async (userId) => {
+    const { workspaceId, members } = get();
+    if (!workspaceId) return;
+    const snapshot = members;
+    set({ members: members.filter((m) => m.id !== userId) });
+    try {
+      await removeMemberApi(workspaceId, userId);
+    } catch (err) {
+      set({ members: snapshot, error: apiErrorMessage(err) });
+      throw err;
+    }
   },
 
   addColumn: async (name) => {
@@ -418,7 +493,8 @@ export const useBoardStore = create<BoardState>((set, get) => ({
     });
   },
 
-  reset: () =>
+  reset: () => {
+    clearSnapshot(); // logout: the next user must not see this board
     set({
       workspaceId: null,
       boards: [],
@@ -428,5 +504,26 @@ export const useBoardStore = create<BoardState>((set, get) => ({
       status: 'idle',
       boardLoading: false,
       error: null,
-    }),
+      offline: false,
+    });
+  },
 }));
+
+// Persist a compressed snapshot (debounced) whenever live server state
+// changes, so the board survives losing the network entirely.
+let snapshotTimer: ReturnType<typeof setTimeout> | undefined;
+useBoardStore.subscribe((state) => {
+  if (state.status !== 'ready' || state.offline || !state.workspaceId) return;
+  clearTimeout(snapshotTimer);
+  const { workspaceId, boards, members, activeBoardId, activeBoard } = state;
+  snapshotTimer = setTimeout(() => {
+    void saveSnapshot({
+      workspaceId,
+      boards,
+      members,
+      activeBoardId,
+      activeBoard,
+      savedAt: new Date().toISOString(),
+    });
+  }, 500);
+});

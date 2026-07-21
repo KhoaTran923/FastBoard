@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { useSocket } from './useSocket';
+import { useAuthStore } from '../stores/authStore';
 import { useBoardStore } from '../stores/boardStore';
 import type { TaskDeletedPayload, TaskEventPayload, TaskMovedPayload } from '../types';
 
@@ -11,6 +12,19 @@ import type { TaskDeletedPayload, TaskEventPayload, TaskMovedPayload } from '../
 export function useBoardSync(boardId: string | null): void {
   const { socket, connected } = useSocket();
   const droppedWhileAway = useRef(false);
+
+  // Connectivity is back: swap the offline snapshot for live server state
+  // and fill in the profile the offline start could not fetch
+  useEffect(() => {
+    if (!connected) return;
+    if (useBoardStore.getState().offline) {
+      void useBoardStore.getState().resync();
+    }
+    const auth = useAuthStore.getState();
+    if (auth.status === 'authenticated' && !auth.user) {
+      void auth.refreshUser();
+    }
+  }, [connected]);
 
   // Join/leave the board room; re-runs on reconnect and board switch
   useEffect(() => {

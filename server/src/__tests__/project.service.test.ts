@@ -3,6 +3,8 @@ import { ProjectService } from '../services/project.service.js';
 import { ProjectRepository } from '../repositories/project.repository.js';
 
 vi.mock('../repositories/project.repository.js');
+vi.mock('../repositories/activity.repository.js');
+vi.mock('../repositories/notification.repository.js');
 
 const mockProject = {
   id: 'proj-uuid-1',
@@ -66,6 +68,80 @@ describe('ProjectService.addMember', () => {
 
     await expect(
       ProjectService.addMember('proj-uuid-1', 'new-user', 'member', 'user-uuid-2')
+    ).rejects.toThrow('Forbidden');
+  });
+});
+
+describe('ProjectService.updateMemberRole', () => {
+  it('should throw Forbidden if requester is not admin', async () => {
+    vi.mocked(ProjectRepository.getMember).mockResolvedValue(mockMemberViewer);
+
+    await expect(
+      ProjectService.updateMemberRole('proj-uuid-1', 'user-uuid-3', 'admin', 'user-uuid-2')
+    ).rejects.toThrow('Forbidden');
+  });
+
+  it('should never change the owner role', async () => {
+    vi.mocked(ProjectRepository.getMember).mockResolvedValue(mockMemberAdmin);
+    vi.mocked(ProjectRepository.findById).mockResolvedValue(mockProject);
+
+    await expect(
+      ProjectService.updateMemberRole('proj-uuid-1', 'user-uuid-1', 'viewer', 'user-uuid-1')
+    ).rejects.toThrow('Cannot change the owner role');
+  });
+
+  it('should let an admin change another member role', async () => {
+    vi.mocked(ProjectRepository.findById).mockResolvedValue(mockProject);
+    vi.mocked(ProjectRepository.getMember)
+      .mockResolvedValueOnce(mockMemberAdmin) // requester
+      .mockResolvedValueOnce(mockMemberViewer); // target
+    vi.mocked(ProjectRepository.addMember).mockResolvedValue({
+      ...mockMemberViewer,
+      role: 'member',
+    });
+
+    const updated = await ProjectService.updateMemberRole(
+      'proj-uuid-1',
+      'user-uuid-2',
+      'member',
+      'user-uuid-1'
+    );
+
+    expect(updated.role).toBe('member');
+    expect(ProjectRepository.addMember).toHaveBeenCalledWith(
+      'proj-uuid-1',
+      'user-uuid-2',
+      'member'
+    );
+  });
+});
+
+describe('ProjectService.removeMember', () => {
+  it('should never remove the project owner', async () => {
+    vi.mocked(ProjectRepository.findById).mockResolvedValue(mockProject);
+
+    await expect(
+      ProjectService.removeMember('proj-uuid-1', 'user-uuid-1', 'user-uuid-1')
+    ).rejects.toThrow('Cannot remove the project owner');
+  });
+
+  it('should let a non-admin member leave on their own', async () => {
+    vi.mocked(ProjectRepository.findById).mockResolvedValue(mockProject);
+    vi.mocked(ProjectRepository.getMember).mockResolvedValue(mockMemberViewer);
+    vi.mocked(ProjectRepository.removeMember).mockResolvedValue(undefined);
+
+    await expect(
+      ProjectService.removeMember('proj-uuid-1', 'user-uuid-2', 'user-uuid-2')
+    ).resolves.not.toThrow();
+    expect(ProjectRepository.removeMember).toHaveBeenCalledWith('proj-uuid-1', 'user-uuid-2');
+  });
+
+  it('should block a non-admin from removing someone else', async () => {
+    vi.mocked(ProjectRepository.findById).mockResolvedValue(mockProject);
+    vi.mocked(ProjectRepository.getMember).mockResolvedValue(mockMemberViewer);
+
+    await expect(
+      ProjectService.removeMember('proj-uuid-1', 'user-uuid-3', 'user-uuid-2')
     ).rejects.toThrow('Forbidden');
   });
 });

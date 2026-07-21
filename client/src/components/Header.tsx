@@ -1,11 +1,14 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { LogoMark } from './common/Logo';
+import { NotificationBell } from './NotificationBell';
 import { SearchBar } from './SearchBar';
 import { Button } from './common/ui';
+import { useMyRole } from '../hooks/useMyRole';
 import { useSocket } from '../hooks/useSocket';
 import { useAuthStore } from '../stores/authStore';
 import { useBoardStore } from '../stores/boardStore';
+import { useNotificationStore } from '../stores/notificationStore';
 
 interface HeaderProps {
   onAddTask: () => void;
@@ -34,6 +37,7 @@ export function Header({ onAddTask, sidebarHidden }: HeaderProps) {
   const { user, logout, status } = useAuthStore();
   const activeBoard = useBoardStore((s) => s.activeBoard);
   const resetBoards = useBoardStore((s) => s.reset);
+  const canEdit = useMyRole() !== 'viewer';
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
 
@@ -42,6 +46,7 @@ export function Header({ onAddTask, sidebarHidden }: HeaderProps) {
   function handleLogout() {
     logout();
     resetBoards();
+    useNotificationStore.getState().reset();
     setMenuOpen(false);
     navigate('/', { replace: true });
   }
@@ -60,9 +65,11 @@ export function Header({ onAddTask, sidebarHidden }: HeaderProps) {
       <div className="flex justify-center">{authed && activeBoard && <SearchBar />}</div>
 
       <div className="flex items-center justify-end gap-2">
-        <Button onClick={onAddTask} disabled={!authed || !activeBoard}>
+        <Button onClick={onAddTask} disabled={!authed || !activeBoard || !canEdit}>
           + Add New Task
         </Button>
+
+        {authed && <NotificationBell />}
 
         <div className="relative">
           <button
