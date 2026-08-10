@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import {
   DndContext,
   DragOverlay,
@@ -48,6 +48,16 @@ export function KanbanBoard({ board, onNewColumn, readOnly = false }: KanbanBoar
 
   const [activeTask, setActiveTask] = useState<Task | null>(null);
   const [detailTask, setDetailTask] = useState<Task | null>(null);
+
+  // Stable callbacks so memo(BoardColumn) skips unchanged columns
+  const handleRenameColumn = useCallback(
+    (columnId: string, name: string) => void renameColumn(columnId, name),
+    [renameColumn]
+  );
+  const handleDeleteColumn = useCallback(
+    (columnId: string) => void deleteColumn(columnId),
+    [deleteColumn]
+  );
 
   // A small drag threshold lets a plain click still open the task detail modal.
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
@@ -107,7 +117,7 @@ export function KanbanBoard({ board, onNewColumn, readOnly = false }: KanbanBoar
       );
     }
     return (
-      <div className="flex h-full gap-6 overflow-auto p-6">
+      <div className="flex h-full gap-6 overflow-x-auto overflow-y-hidden p-6">
         {shown.map((c, i) => (
           <BoardColumn
             key={c.id}
@@ -116,8 +126,8 @@ export function KanbanBoard({ board, onNewColumn, readOnly = false }: KanbanBoar
             sortable={false}
             canEdit={canEdit}
             onTaskClick={setDetailTask}
-            onRename={(name) => void renameColumn(c.id, name)}
-            onDelete={() => void deleteColumn(c.id)}
+            onRename={handleRenameColumn}
+            onDelete={handleDeleteColumn}
           />
         ))}
         {canEdit && <NewColumnButton onClick={onNewColumn} />}
@@ -133,7 +143,7 @@ export function KanbanBoard({ board, onNewColumn, readOnly = false }: KanbanBoar
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
     >
-      <div className="flex h-full gap-6 overflow-auto p-6">
+      <div className="flex h-full gap-6 overflow-x-auto overflow-y-hidden p-6">
         {columns.map((c, i) => (
           <BoardColumn
             key={c.id}
@@ -142,8 +152,8 @@ export function KanbanBoard({ board, onNewColumn, readOnly = false }: KanbanBoar
             sortable
             canEdit
             onTaskClick={setDetailTask}
-            onRename={(name) => void renameColumn(c.id, name)}
-            onDelete={() => void deleteColumn(c.id)}
+            onRename={handleRenameColumn}
+            onDelete={handleDeleteColumn}
           />
         ))}
         <NewColumnButton onClick={onNewColumn} />

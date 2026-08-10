@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import { Modal } from '../common/Modal';
 import { Button, Field, Input } from '../common/ui';
+import { firstIssue, taskFormSchema } from '../../lib/validation';
 import { apiErrorMessage } from '../../services/http';
 import { useBoardStore } from '../../stores/boardStore';
 import type { Task, TaskPriority } from '../../types';
@@ -37,8 +38,9 @@ export function TaskDetailModal({ task, readOnly = false, onClose }: TaskDetailM
 
   async function handleSave(e: FormEvent) {
     e.preventDefault();
-    if (!title.trim()) {
-      setError('Title is required.');
+    const issue = firstIssue(taskFormSchema, { title, description: description || undefined });
+    if (issue) {
+      setError(issue);
       return;
     }
     setBusy(true);

@@ -4,6 +4,7 @@ import { AuthCard, OrDivider } from '../components/common/AuthCard';
 import { GoogleButton } from '../components/common/GoogleButton';
 import { PasswordInput } from '../components/common/PasswordInput';
 import { Button, Field, Input } from '../components/common/ui';
+import { firstIssue, loginSchema } from '../lib/validation';
 import { apiErrorMessage } from '../services/http';
 import { useAuthStore } from '../stores/authStore';
 
@@ -22,6 +23,11 @@ export function LoginPage() {
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
+    const issue = firstIssue(loginSchema, { email, password });
+    if (issue) {
+      setError(issue);
+      return;
+    }
     setError('');
     setSubmitting(true);
     try {

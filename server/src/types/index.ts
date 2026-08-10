@@ -88,7 +88,8 @@ export interface Task {
 export interface ActivityLog {
   id: string;
   project_id: string;
-  user_id: string;
+  /** Null when the acting user account was deleted. */
+  user_id: string | null;
   action: string;
   entity_type: string;
   entity_id: string;

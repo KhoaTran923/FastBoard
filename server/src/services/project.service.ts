@@ -1,6 +1,7 @@
 import { ProjectRepository } from '../repositories/project.repository.js';
 import { ActivityService } from './activity.service.js';
 import { NotificationService } from './notification.service.js';
+import { cache, cacheKeys } from '../lib/cache.js';
 import type { CreateProjectInput, UpdateProjectInput } from '../schemas/project.schema.js';
 import type { UserRole } from '../types/index.js';
 
@@ -45,6 +46,7 @@ export const ProjectService = {
     const requester = await ProjectRepository.getMember(projectId, requesterId);
     if (!requester || requester.role !== 'admin') throw new Error('Forbidden');
     const member = await ProjectRepository.addMember(projectId, targetUserId, role);
+    await cache.del(cacheKeys.members(projectId));
 
     await ActivityService.log(projectId, requesterId, 'member.added', 'project', projectId, {
       member_id: targetUserId,
@@ -74,6 +76,7 @@ export const ProjectService = {
     if (target.role === role) return target;
 
     const updated = await ProjectRepository.addMember(projectId, targetUserId, role);
+    await cache.del(cacheKeys.members(projectId));
 
     await ActivityService.log(projectId, requesterId, 'member.role_changed', 'project', projectId, {
       member_id: targetUserId,
@@ -97,6 +100,7 @@ export const ProjectService = {
     if (!isSelf && (!requester || requester.role !== 'admin')) throw new Error('Forbidden');
 
     await ProjectRepository.removeMember(projectId, targetUserId);
+    await cache.del(cacheKeys.members(projectId));
     await ActivityService.log(
       projectId,
       requesterId,
@@ -112,6 +116,13 @@ export const ProjectService = {
     if (!project) throw new Error('Project not found');
     const member = await ProjectRepository.getMember(projectId, userId);
     if (!member && project.owner_id !== userId) throw new Error('Access denied');
-    return ProjectRepository.getMembers(projectId);
+
+    const key = cacheKeys.members(projectId);
+    const cached = await cache.get<Awaited<ReturnType<typeof ProjectRepository.getMembers>>>(key);
+    if (cached) return cached;
+
+    const members = await ProjectRepository.getMembers(projectId);
+    await cache.set(key, members);
+    return members;
   },
 };

@@ -10,7 +10,8 @@
     "lint": "eslint .",
     "format": "prettier --write .",
     "typecheck": "pnpm -r run typecheck",
-    "test": "pnpm --filter @repo/server run test",
+    "test": "pnpm -r run test",
+    "test:integration": "pnpm --filter @repo/server run test:integration",
     "db:up": "docker compose up -d",
     "db:down": "docker compose down",
     "migrate": "pnpm --filter @repo/server run migrate",
@@ -22,7 +23,7 @@
   "devEngines": {
     "packageManager": {
       "name": "pnpm",
-      "version": "^11.5.2",
+      "version": "^11.8.0",
       "onFail": "download"
     }
   },

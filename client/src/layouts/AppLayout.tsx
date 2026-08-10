@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { Outlet, useNavigate } from 'react-router-dom';
 import { Header } from '../components/Header';
 import { Sidebar } from '../components/Sidebar';
+import { Spinner } from '../components/common/ui';
 import { AddTaskModal } from '../components/modals/AddTaskModal';
 import { BoardFormModal } from '../components/modals/BoardFormModal';
 import { TextPromptModal } from '../components/modals/TextPromptModal';
@@ -23,7 +24,11 @@ export function AppLayout() {
 
   const status = useAuthStore((s) => s.status);
   const navigate = useNavigate();
-  const { activeBoard, createBoard, addColumn, addTask } = useBoardStore();
+  // Selective subscriptions: a whole-store hook would re-render the entire
+  // layout (header + sidebar) on every task change
+  const createBoard = useBoardStore((s) => s.createBoard);
+  const addColumn = useBoardStore((s) => s.addColumn);
+  const addTask = useBoardStore((s) => s.addTask);
   const boardStatus = useBoardStore((s) => s.status);
 
   // Load the workspace here (not in a page) so deep links to /activity or
@@ -57,7 +62,16 @@ export function AppLayout() {
       <div className="flex min-w-0 flex-1 flex-col">
         <Header onAddTask={openAddTask} sidebarHidden={!sidebarVisible} />
         <main className="min-h-0 flex-1 bg-light-grey dark:bg-very-dark">
-          <Outlet context={context} />
+          {/* Lazy page chunks load inside the layout, keeping the shell visible */}
+          <Suspense
+            fallback={
+              <div className="flex h-full items-center justify-center">
+                <Spinner className="text-purple" />
+              </div>
+            }
+          >
+            <Outlet context={context} />
+          </Suspense>
         </main>
       </div>
 
@@ -93,9 +107,17 @@ export function AppLayout() {
           onSubmit={addColumn}
         />
       )}
-      {modal === 'addTask' && activeBoard && (
-        <AddTaskModal columns={activeBoard.columns} onClose={close} onSubmit={addTask} />
-      )}
+      {modal === 'addTask' && <AddTaskModalContainer onClose={close} onSubmit={addTask} />}
     </div>
   );
+}
+
+// Subscribes to columns only while the modal is open
+function AddTaskModalContainer(props: {
+  onClose: () => void;
+  onSubmit: Parameters<typeof AddTaskModal>[0]['onSubmit'];
+}) {
+  const columns = useBoardStore((s) => s.activeBoard?.columns);
+  if (!columns) return null;
+  return <AddTaskModal columns={columns} {...props} />;
 }

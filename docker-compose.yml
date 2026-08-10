@@ -1,5 +1,5 @@
 # Local development services.
-#   docker compose up -d     start PostgreSQL
+#   docker compose up -d     start PostgreSQL + Redis
 #   docker compose down      stop (data is kept)
 #   docker compose down -v   stop and wipe the database
 services:
@@ -17,6 +17,18 @@ services:
       - fastboard-pgdata:/var/lib/postgresql/data
     healthcheck:
       test: ['CMD-SHELL', 'pg_isready -U postgres -d fastboard']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    container_name: fastboard-redis
+    restart: unless-stopped
+    ports:
+      - '6379:6379'
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
       interval: 5s
       timeout: 5s
       retries: 10

@@ -4,6 +4,7 @@ import { AuthCard, OrDivider } from '../components/common/AuthCard';
 import { GoogleButton } from '../components/common/GoogleButton';
 import { PasswordInput } from '../components/common/PasswordInput';
 import { Button, Field, Input } from '../components/common/ui';
+import { firstIssue, registerSchema } from '../lib/validation';
 import { apiErrorMessage } from '../services/http';
 import { useAuthStore } from '../stores/authStore';
 
@@ -22,16 +23,14 @@ export function RegisterPage() {
 
   if (status === 'authenticated') return <Navigate to={from} replace />;
 
-  function validate(): string | null {
-    if (fullName.trim().length < 2) return 'Please enter your name.';
-    if (password.length < 8) return 'Password must be at least 8 characters.';
-    if (password !== confirm) return 'Passwords do not match.';
-    return null;
-  }
-
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
-    const validationError = validate();
+    const validationError = firstIssue(registerSchema, {
+      full_name: fullName,
+      email,
+      password,
+      confirm,
+    });
     if (validationError) {
       setError(validationError);
       return;

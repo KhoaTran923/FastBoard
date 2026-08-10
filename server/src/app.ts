@@ -1,7 +1,7 @@
 import 'dotenv/config';
-import { createServer } from 'node:http';
 import express from 'express';
 import cors from 'cors';
+import helmet from 'helmet';
 
 import { apiLimiter } from './middlewares/rateLimit.middleware.js';
 import authRoutes from './routes/auth.routes.js';
@@ -9,19 +9,19 @@ import inviteRoutes from './routes/invite.routes.js';
 import notificationRoutes from './routes/notification.routes.js';
 import projectRoutes from './routes/project.routes.js';
 import userRoutes from './routes/user.routes.js';
-import { initSocket } from './socket/index.js';
 
 const app = express();
-const PORT = process.env.PORT || 3001;
 
 // Middleware
+app.use(helmet()); // security headers (CSP is irrelevant for a JSON API)
 app.use(
   cors({
     origin: process.env.CORS_ORIGIN || 'http://localhost:5173',
     credentials: true,
   })
 );
-app.use(express.json());
+// 100kb covers the largest legitimate payload; bigger bodies are rejected
+app.use(express.json({ limit: '100kb' }));
 
 // Rate limiting (stricter limiter on auth routes)
 app.use('/api/', apiLimiter);
@@ -41,16 +41,11 @@ app.use('/api/notifications', notificationRoutes);
 // Global error handler
 app.use((err: Error, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
   console.error(err);
-  res.status(500).json({ success: false, error: 'Internal server error' });
-});
-
-// Express and Socket.io share one HTTP server on the same port
-const httpServer = createServer(app);
-initSocket(httpServer);
-
-httpServer.listen(PORT, () => {
-  console.log(`FastBoard server running on http://localhost:${PORT}`);
-  console.log(`Environment: ${process.env.NODE_ENV ?? 'development'}`);
+  // Malformed JSON bodies and oversized payloads arrive here as client errors
+  const status = 'status' in err && typeof err.status === 'number' ? err.status : 500;
+  res
+    .status(status)
+    .json({ success: false, error: status === 500 ? 'Internal server error' : err.message });
 });
 
 export default app;

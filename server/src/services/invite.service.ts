@@ -2,6 +2,7 @@ import { InviteRepository } from '../repositories/invite.repository.js';
 import { ProjectRepository } from '../repositories/project.repository.js';
 import { ActivityService } from './activity.service.js';
 import { NotificationService } from './notification.service.js';
+import { cache, cacheKeys } from '../lib/cache.js';
 import type { UserRole } from '../types/index.js';
 
 const DEFAULT_EXPIRY_DAYS = 7;
@@ -43,6 +44,7 @@ export const InviteService = {
     if (existing) return { project_id: invite.project_id, already_member: true };
 
     await ProjectRepository.addMember(invite.project_id, userId, invite.role);
+    await cache.del(cacheKeys.members(invite.project_id));
 
     await ActivityService.log(
       invite.project_id,

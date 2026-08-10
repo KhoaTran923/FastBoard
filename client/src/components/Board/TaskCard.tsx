@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { useBoardStore } from '../../stores/boardStore';
 import type { Member, Task } from '../../types';
 
@@ -34,7 +35,8 @@ interface TaskCardProps {
   onClick?: () => void;
 }
 
-export function TaskCard({ task, onClick }: TaskCardProps) {
+// memo: a board render only re-renders the cards whose task object changed
+export const TaskCard = memo(function TaskCard({ task, onClick }: TaskCardProps) {
   const members = useBoardStore((s) => s.members);
   const assignees = (task.assignees ?? [])
     .map((id) => members.find((m) => m.id === id))
@@ -119,4 +121,4 @@ export function TaskCard({ task, onClick }: TaskCardProps) {
       )}
     </div>
   );
-}
+});

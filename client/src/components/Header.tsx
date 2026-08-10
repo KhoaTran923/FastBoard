@@ -34,8 +34,11 @@ function LiveBadge() {
 }
 
 export function Header({ onAddTask, sidebarHidden }: HeaderProps) {
-  const { user, logout, status } = useAuthStore();
-  const activeBoard = useBoardStore((s) => s.activeBoard);
+  // Primitive selectors: the header must not re-render on every task edit
+  const user = useAuthStore((s) => s.user);
+  const logout = useAuthStore((s) => s.logout);
+  const status = useAuthStore((s) => s.status);
+  const boardName = useBoardStore((s) => s.activeBoard?.name);
   const resetBoards = useBoardStore((s) => s.reset);
   const canEdit = useMyRole() !== 'viewer';
   const navigate = useNavigate();
@@ -56,16 +59,18 @@ export function Header({ onAddTask, sidebarHidden }: HeaderProps) {
       <div className="flex min-w-0 items-center gap-4">
         {sidebarHidden && <LogoMark />}
         <h1 className="truncate text-xl font-bold text-black dark:text-white">
-          {activeBoard?.name ?? 'FastBoard'}
+          {boardName ?? 'FastBoard'}
         </h1>
-        {authed && activeBoard && <LiveBadge />}
+        {authed && boardName !== undefined && <LiveBadge />}
       </div>
 
       {/* Centered WASM-powered task search */}
-      <div className="flex justify-center">{authed && activeBoard && <SearchBar />}</div>
+      <div className="flex justify-center">
+        {authed && boardName !== undefined && <SearchBar />}
+      </div>
 
       <div className="flex items-center justify-end gap-2">
-        <Button onClick={onAddTask} disabled={!authed || !activeBoard || !canEdit}>
+        <Button onClick={onAddTask} disabled={!authed || boardName === undefined || !canEdit}>
           + Add New Task
         </Button>
 

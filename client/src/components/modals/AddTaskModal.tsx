@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import { Modal } from '../common/Modal';
 import { Button, Field, Input } from '../common/ui';
+import { firstIssue, taskFormSchema } from '../../lib/validation';
 import { apiErrorMessage } from '../../services/http';
 import type { CreateTaskInput } from '../../services/boards';
 import type { TaskPriority } from '../../types';
@@ -25,8 +26,9 @@ export function AddTaskModal({ columns, onClose, onSubmit }: AddTaskModalProps) 
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
-    if (!title.trim()) {
-      setError('Title is required.');
+    const issue = firstIssue(taskFormSchema, { title, description: description || undefined });
+    if (issue) {
+      setError(issue);
       return;
     }
     setSubmitting(true);
