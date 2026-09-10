@@ -14,6 +14,9 @@
     "test:integration": "pnpm --filter @repo/server run test:integration",
     "db:up": "docker compose up -d",
     "db:down": "docker compose down",
+    "docker:up": "docker compose -f docker-compose.prod.yml --env-file .env.docker up -d --build",
+    "docker:down": "docker compose -f docker-compose.prod.yml --env-file .env.docker down",
+    "docker:logs": "docker compose -f docker-compose.prod.yml --env-file .env.docker logs -f",
     "migrate": "pnpm --filter @repo/server run migrate",
     "seed": "pnpm --filter @repo/server run seed"
   },

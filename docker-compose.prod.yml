@@ -1,0 +1,91 @@
+# Full production-shaped stack, all four services in containers.
+#   cp .env.docker.example .env.docker   (then edit the secrets)
+#   docker compose -f docker-compose.prod.yml --env-file .env.docker up -d --build
+#   open http://localhost:8080
+#
+# The dev stack (docker-compose.yml) stays database-only; this file is what a
+# single-VM deployment looks like.
+
+# Own project name (both files sit in the same directory, so Compose would
+# otherwise infer the same one and put both stacks on a shared network, where
+# the service alias "postgres" resolves to whichever container answers first).
+name: fastboard-prod
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:-fastboard}
+    volumes:
+      - fastboard-pgdata-prod:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-fastboard}']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # One-shot: applies pending SQL migrations, then exits
+  migrate:
+    build:
+      context: .
+      dockerfile: server/Dockerfile
+    command: ['node', 'dist/db/migrate.js']
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-fastboard}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: 'no'
+
+  server:
+    build:
+      context: .
+      dockerfile: server/Dockerfile
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: 3001
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-fastboard}
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: ${JWT_SECRET:?set JWT_SECRET}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:?set JWT_REFRESH_SECRET}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-15m}
+      JWT_REFRESH_EXPIRES_IN: ${JWT_REFRESH_EXPIRES_IN:-7d}
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:8080}
+    ports:
+      - '${SERVER_PORT:-3001}:3001'
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+
+  client:
+    build:
+      context: .
+      dockerfile: client/Dockerfile
+      args:
+        # Baked into the bundle: where the browser reaches the API
+        VITE_API_URL: ${VITE_API_URL:-http://localhost:3001/api}
+    restart: unless-stopped
+    ports:
+      - '${CLIENT_PORT:-8080}:80'
+    depends_on:
+      - server
+
+volumes:
+  fastboard-pgdata-prod:

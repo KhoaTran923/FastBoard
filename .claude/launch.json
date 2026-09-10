@@ -18,6 +18,11 @@
       "runtimeExecutable": "pnpm",
       "runtimeArgs": ["--filter", "@repo/client", "preview"],
       "port": 4173
+    },
+    {
+      "name": "docker-client",
+      "url": "http://localhost:8080",
+      "port": 8080
     }
   ]
 }

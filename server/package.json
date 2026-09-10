@@ -8,6 +8,7 @@
     "build": "tsc",
     "start": "node dist/server.js",
     "migrate": "tsx src/db/migrate.ts",
+    "migrate:prod": "node dist/db/migrate.js",
     "seed": "tsx src/db/seed.ts",
     "typecheck": "tsc --noEmit",
     "test": "vitest run --exclude \"**/*.integration.test.ts\"",
